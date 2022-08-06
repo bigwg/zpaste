@@ -20,15 +20,12 @@ function createWindow () {
     }
   });
 
-  // 加载应用 --打包react应用后，__dirname为当前文件路径
-  // mainWindow.loadURL(url.format({
-  //   pathname: path.join(__dirname, './build/index.html'),
-  //   protocol: 'file:',
-  //   slashes: true
-  // }));
-
-  // 加载应用 --开发阶段  需要运行 npm run start
-  mainWindow.loadURL('http://localhost:3000/');
+  // 开发环境使用 http 协议 生产环境使用 file 协议
+  if (process.env.NODE_ENV === 'dev') {
+    mainWindow.loadURL('http://localhost:3000/');
+  } else {
+    mainWindow.loadURL(`file://${__dirname}/index.html`);
+  }
 
   // 解决应用启动白屏问题
   mainWindow.on('ready-to-show', () => {
@@ -44,11 +41,11 @@ function createWindow () {
 
 app.whenReady().then(createWindow);
 
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit()
-  }
-});
+// app.on('window-all-closed', () => {
+//   if (process.platform !== 'darwin') {
+//     app.quit()
+//   }
+// });
 
 app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {
