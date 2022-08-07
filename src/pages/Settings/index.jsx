@@ -1,43 +1,44 @@
-import { Layout } from 'antd';
-// @ts-ignore
-import React, {Component} from 'react';
-const { Header, Footer, Sider, Content } = Layout;
+import {LaptopOutlined, NotificationOutlined, UserOutlined} from '@ant-design/icons';
+import {Layout, Menu} from 'antd';
+import React from 'react';
+import './style.css'
 
-const App = () => (
-    <>
+const {Content, Footer, Sider} = Layout;
+const items2 = [UserOutlined, LaptopOutlined, NotificationOutlined].map((icon, index) => {
+    const key = String(index + 1);
+    return {
+        key: `sub${key}`,
+        icon: React.createElement(icon),
+        label: `subnav ${key}`,
+        children: new Array(4).fill(null).map((_, j) => {
+            const subKey = index * 4 + j + 1;
+            return {
+                key: subKey,
+                label: `option${subKey}`,
+            };
+        }),
+    };
+});
+
+const Settings = () => {
+    return (
         <Layout>
-            <Header>Header</Header>
-            <Content>Content</Content>
-            <Footer>Footer</Footer>
+            <Content style={{padding: '0 50px'}}>
+                <Layout className="site-layout-background" style={{padding: '24px 0'}}>
+                    <Sider className="site-layout-background" width={200}>
+                        <Menu
+                            mode="inline"
+                            defaultSelectedKeys={['1']}
+                            defaultOpenKeys={['sub1']}
+                            style={{height: '100%'}}
+                            items={items2}
+                        />
+                    </Sider>
+                    <Content style={{padding: '0 24px', minHeight: 280}}>Content</Content>
+                </Layout>
+            </Content>
         </Layout>
+    );
+};
 
-        <Layout>
-            <Header>Header</Header>
-            <Layout>
-                <Sider>Sider</Sider>
-                <Content>Content</Content>
-            </Layout>
-            <Footer>Footer</Footer>
-        </Layout>
-
-        <Layout>
-            <Header>Header</Header>
-            <Layout>
-                <Content>Content</Content>
-                <Sider>Sider</Sider>
-            </Layout>
-            <Footer>Footer</Footer>
-        </Layout>
-
-        <Layout>
-            <Sider>Sider</Sider>
-            <Layout>
-                <Header>Header</Header>
-                <Content>Content</Content>
-                <Footer>Footer</Footer>
-            </Layout>
-        </Layout>
-    </>
-);
-
-export default App;
+export default Settings;
