@@ -13,8 +13,5 @@ export default function App() {
                 </Switch>
             </div>
         </Router>
-        // <div>
-        //     <Settings></Settings>
-        // </div>
     );
 }

@@ -1,6 +1,7 @@
 const {
     app, BrowserWindow, nativeImage,
-    Tray, Menu, globalShortcut
+    Tray, Menu, globalShortcut,
+    ipcMain, Notification
 } = require('electron');
 const localShortcut = require('electron-localshortcut');
 
@@ -11,9 +12,9 @@ let tray = null;
 // 创建主窗口（设置窗口）
 function createMainWindow() {
     mainWindow = new BrowserWindow({
-        width: 800, // 窗口宽度
-        height: 600, // 窗口高度
-        title: "Electron", // 窗口标题,如果由loadURL()加载的HTML文件中含有标签<title>，该属性可忽略
+        width: 500, // 窗口宽度
+        height: 428, // 窗口高度
+        title: "Zpast", // 窗口标题,如果由loadURL()加载的HTML文件中含有标签<title>，该属性可忽略
         icon: nativeImage.createFromPath('src/public/favicon.ico'), // "string" || nativeImage.createFromPath('src/image/icons/256x256.ico')从位于 path 的文件创建新的 NativeImage 实例
         webPreferences: { // 网页功能设置
             nodeIntegration: true, // 是否启用node集成 渲染进程的内容有访问node的能力
@@ -47,7 +48,7 @@ function createMainWindow() {
 function createBoardWindow() {
     boardWindow = new BrowserWindow({
         width: 500, // 窗口宽度
-        height: 600, // 窗口高度
+        height: 800, // 窗口高度
         title: "zpaste", // 窗口标题,如果由loadURL()加载的HTML文件中含有标签<title>，该属性可忽略
         icon: nativeImage.createFromPath('src/public/favicon.ico'), // "string" || nativeImage.createFromPath('src/image/icons/256x256.ico')从位于 path 的文件创建新的 NativeImage 实例
         webPreferences: { // 网页功能设置
@@ -143,9 +144,20 @@ function registerDefaultGlobalShortcut() {
     });
 }
 
+const NOTIFICATION_TITLE = 'Basic Notification'
+
+function showNotification (body) {
+    new Notification({ title: NOTIFICATION_TITLE, body: body }).show()
+}
+
+ipcMain.on("test", (e, args) => {
+    showNotification(args[0])
+})
+
 app.whenReady().then(registerDefaultGlobalShortcut)
     .then(createTray).then(createMainWindow);
-
+    
+// 全部关闭退出
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
         app.quit()
