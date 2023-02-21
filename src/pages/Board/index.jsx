@@ -1,30 +1,25 @@
-import {Col, Row} from 'antd';
 import React from 'react';
-import './style.css'
+import './style.scss'
+import Category from "../../components/board/Category";
+import Clip from "../../components/board/Clip";
 
-const cols = [];
-const colCount = 2;
 
-for (let i = 0; i < colCount; i++) {
-    cols.push(
-        <Col key={i.toString()} span={24 / colCount}>
-            <div>Column</div>
-        </Col>,
-    );
-}
+class Board extends React.PureComponent {
 
-const Board = () => {
-    return (
-        <>
-            <div>
-                这是Board页面
-            </div>
-            <Row gutter={[8, 8]}>
-                {cols}
-                {cols}
-            </Row>
-        </>
-    );
+    state = {title: "默认title"}
+
+    handClick = () => {
+        this.setState({title: "修改后的title"})
+    }
+
+    render() {
+        return (
+            <>
+                <Category/>
+                <Clip/>
+            </>
+        );
+    }
 };
 
 export default Board;

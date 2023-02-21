@@ -10,7 +10,7 @@ for (let i = 0; i < colCount; i++) {
     );
 }
 
-class Clip extends React.PureComponent {
+class Common extends React.PureComponent {
 
     handClick = () => {
         console.log('this is:', this);
@@ -19,10 +19,11 @@ class Clip extends React.PureComponent {
     render() {
         return (
             <div className="clipPane">
-                {cols}
+                <input type="checkbox" name="autoRunning" checked/>开机启动
+                <button name='退出'/>
             </div>
         );
     }
-};
+}
 
-export default Clip;
+export default Common;
