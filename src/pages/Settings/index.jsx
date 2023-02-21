@@ -1,10 +1,10 @@
-import {LaptopOutlined, NotificationOutlined, UserOutlined} from '@ant-design/icons';
+import {UserOutlined} from '@ant-design/icons';
 import {Layout, Menu} from 'antd';
 import React from 'react';
 import './style.css'
 
-const {Content, Footer, Sider} = Layout;
-const items2 = [UserOutlined, LaptopOutlined, NotificationOutlined].map((icon, index) => {
+const {Content, Sider} = Layout;
+const items2 = [UserOutlined].map((icon, index) => {
     const key = String(index + 1);
     return {
         key: `sub${key}`,
@@ -23,8 +23,8 @@ const items2 = [UserOutlined, LaptopOutlined, NotificationOutlined].map((icon, i
 const Settings = () => {
     return (
         <Layout>
-            <Content style={{padding: '0 50px'}}>
-                <Layout className="site-layout-background" style={{padding: '24px 0'}}>
+            <Content style={{padding: '0 0'}}>
+                <Layout className="site-layout-background" style={{padding: '0 0'}}>
                     <Sider className="site-layout-background" width={200}>
                         <Menu
                             mode="inline"

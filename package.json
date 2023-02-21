@@ -11,11 +11,15 @@
     "@testing-library/user-event": "^13.5.0",
     "antd": "^4.22.3",
     "electron-localshortcut": "^3.2.1",
+    "electron-rebuild": "^3.2.9",
     "nedb": "^1.8.0",
+    "node-abi": "^3.33.0",
+    "node-schedule": "^2.1.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^5.3.0",
     "react-scripts": "5.0.1",
+    "robotjs": "^0.6.0",
     "web-vitals": "^2.1.4"
   },
   "scripts": {
@@ -24,8 +28,9 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "electron-start": "cross-env NODE_ENV=dev electron .",
-    "electron-dev": "concurrently \"BROWSER=none npm run start\" \"wait-on http://localhost:3000 && cross-env NODE_ENV=dev electron . \"",
-    "package": "electron-builder"
+    "electron-dev": "concurrently \"cross-env BROWSER=none npm run start\" \"wait-on http://localhost:3000 && cross-env NODE_ENV=dev electron . \"",
+    "package": "electron-builder",
+    "rebuild": "npx electron-rebuild -f -t prod,optional,dev -w robotjs"
   },
   "eslintConfig": {
     "extends": [
@@ -49,7 +54,7 @@
     "@types/nedb": "^1.8.12",
     "concurrently": "^7.3.0",
     "cross-env": "^7.0.3",
-    "electron": "^19.0.9",
+    "electron": "^19.0.1",
     "electron-builder": "^23.1.0",
     "electron-packager": "^15.5.1",
     "wait-on": "^6.0.1"

@@ -3,10 +3,14 @@ const {
     Tray, Menu, globalShortcut
 } = require('electron');
 const localShortcut = require('electron-localshortcut');
+const startDataClearJob = require('./src/workers/DataClearJob.js');
+const robot = require("robotjs");
 
 let mainWindow = null;
 let boardWindow = null;
 let tray = null;
+
+console.log(process.versions)
 
 // 创建主窗口（设置窗口）
 function createMainWindow() {
@@ -130,18 +134,21 @@ function createTray() {
 // 注册默认全局快捷键
 function registerDefaultGlobalShortcut() {
     globalShortcut.register('Control+Shift+V', () => {
-        if (boardWindow) {
-            if (boardWindow.isFocused()) {
-                boardWindow.hide();
-            } else {
-                boardWindow.show();
-                boardWindow.focus();
-            }
-        } else {
-            createBoardWindow();
-        }
+        // if (boardWindow) {
+        //     if (boardWindow.isFocused()) {
+        //         boardWindow.hide();
+        //     } else {
+        //         boardWindow.show();
+        //         boardWindow.focus();
+        //     }
+        // } else {
+        //     createBoardWindow();
+        // }
+        robot.keyTap('v', 'control')
     });
 }
+
+startDataClearJob();
 
 app.whenReady().then(registerDefaultGlobalShortcut)
     .then(createTray).then(createMainWindow);
