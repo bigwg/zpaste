@@ -1,7 +1,7 @@
 import {UserOutlined} from '@ant-design/icons';
 import {Layout, Menu} from 'antd';
 import React from 'react';
-import './style.css'
+import './style.scss';
 
 const {Content, Sider} = Layout;
 const items2 = [UserOutlined].map((icon, index) => {

@@ -1,4 +1,5 @@
 import React from 'react';
+import './style.scss';
 
 const menus = ['通用', '快捷键', '高级', '关于']
 
