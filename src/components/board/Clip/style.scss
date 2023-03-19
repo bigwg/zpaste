@@ -1,3 +1,47 @@
-.clipPane{
-  display: flex;
+$clip-width: 350px;
+.clip{
+  float: left;
+  border: #d9d5d1 solid 2px;
+  height: 350px;
+  width: $clip-width;
+  border-radius: 10px 10px 10px 10px;
+  overflow: hidden;
+}
+
+.clip-select{
+  float: left;
+  border: #377af0 solid 2px;
+  height: 350px;
+  width: $clip-width;
+  border-radius: 10px 10px 10px 10px;
+  overflow: hidden;
+}
+
+.clip-title{
+  background-color: #4a8cf5;
+  height: 70px;
+  width: $clip-width;
+
+  .category{
+
+  }
+
+  .copy-time{
+
+  }
+
+  .app-icon{
+    float: right;
+    margin-top: -15px;
+    margin-right: -20px;
+    height: 100px;
+    width: 100px;
+  }
+
+}
+
+.clip-context{
+  background-color: #ffffff;
+  height: 280px;
+  width: $clip-width;
 }

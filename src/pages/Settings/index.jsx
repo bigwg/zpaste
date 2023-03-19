@@ -1,44 +1,10 @@
-import {UserOutlined} from '@ant-design/icons';
-import {Layout, Menu} from 'antd';
 import React from 'react';
 import './style.scss';
 
-const {Content, Sider} = Layout;
-const items2 = [UserOutlined].map((icon, index) => {
-    const key = String(index + 1);
-    return {
-        key: `sub${key}`,
-        icon: React.createElement(icon),
-        label: `subnav ${key}`,
-        children: new Array(4).fill(null).map((_, j) => {
-            const subKey = index * 4 + j + 1;
-            return {
-                key: subKey,
-                label: `option${subKey}`,
-            };
-        }),
-    };
-});
-
-const Settings = () => {
+function Settings() {
     return (
-        <Layout>
-            <Content style={{padding: '0 0'}}>
-                <Layout className="site-layout-background" style={{padding: '0 0'}}>
-                    <Sider className="site-layout-background" width={200}>
-                        <Menu
-                            mode="inline"
-                            defaultSelectedKeys={['1']}
-                            defaultOpenKeys={['sub1']}
-                            style={{height: '100%'}}
-                            items={items2}
-                        />
-                    </Sider>
-                    <Content style={{padding: '0 24px', minHeight: 280}}>Content</Content>
-                </Layout>
-            </Content>
-        </Layout>
+        <div>测测惆怅长岑长错错</div>
     );
-};
+}
 
 export default Settings;

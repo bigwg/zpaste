@@ -1,8 +1,10 @@
 import { configureStore } from '@reduxjs/toolkit'
-import clipboard from './clipboard'
+import clipboard from './clipboard.js'
 
-export default configureStore({
+const store =  configureStore({
     reducer: {
         clipboard,
     },
 })
+
+export default store;
