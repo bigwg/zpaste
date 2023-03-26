@@ -32,6 +32,7 @@
     "eject": "react-scripts eject",
     "electron-start": "cross-env NODE_ENV=dev electron .",
     "electron-dev": "concurrently \"cross-env BROWSER=none npm run start\" \"wait-on http://localhost:3000 && cross-env NODE_ENV=dev electron . \"",
+    "electron-debug": "concurrently \"cross-env BROWSER=none npm run start\" \"wait-on http://localhost:3000 && cross-env NODE_ENV=dev electron --debug = 9229 . \"",
     "rebuild": "npx electron-rebuild -f -t prod,optional,dev -w robotjs"
   },
   "eslintConfig": {

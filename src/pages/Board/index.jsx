@@ -7,26 +7,19 @@ import {addClip} from "../../store/clipboard.js";
 
 function Board(props) {
 
+    // 触发store中action以更新数据
+    window.electronAPI.onUpdateCounter((_event, value) => {
+        console.log('新增复制内容：', value)
+        dispatch(addClip(value))
+    })
+
     const dispatch = useDispatch()
     // 使用state中的数据
     const sortList = useSelector((state) => state.clipboard.sortList)
 
     useEffect(() => {
-        // 触发store中action以更新数据
-        window.electronAPI.onUpdateCounter((_event, value) => {
-            console.log('新增复制内容：', value)
-            dispatch(addClip(value))
-        })
-    }, [])
 
-    const buildClips = () => {
-        console.log(sortList)
-        let result = [];
-        for (const i in sortList) {
-            result.push(<Clip data={sortList[i]}/>)
-        }
-        return result;
-    }
+    })
 
     const buildBoardWidth = () => {
         let boardWidth = (sortList.length + 1) * 350;
@@ -35,6 +28,15 @@ function Board(props) {
 
     const boardStyle = {
         width: buildBoardWidth()
+    }
+
+    const buildClips = () => {
+        console.log(sortList)
+        let result = [];
+        for (const i in sortList) {
+            result.push(<Clip data={sortList[i]}/>)
+        }
+        return result;
     }
 
     return (

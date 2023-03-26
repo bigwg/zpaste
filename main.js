@@ -1,12 +1,12 @@
 const {
     app, BrowserWindow, nativeImage,
-    Tray, Menu, globalShortcut
+    Tray, Menu, globalShortcut, ipcMain
 } = require('electron');
 const path = require('path');
 const localShortcut = require('electron-localshortcut');
 const startDataClearJob = require('./src/workers/dataClearJob.js');
-const {startClipboardListener, stopClipboardListener} = require('./src/workers/clipboardListener.js');
-const robot = require("robotjs");
+const {startClipboardListener, stopClipboardListener} = require('./src/workers/clipboardHandler.js');
+const {pasteClip} = require("./src/workers/clipboardHandler");
 
 let mainWindow = null;
 let boardWindow = null;
@@ -60,6 +60,7 @@ function createBoardWindow() {
         icon: nativeImage.createFromPath('src/public/favicon.ico'), // "string" || nativeImage.createFromPath('src/image/icons/256x256.ico')从位于 path 的文件创建新的 NativeImage 实例
         show: false,
         frame: false,
+        focusable: false,
         alwaysOnTop: true,
         webPreferences: { // 网页功能设置
             nodeIntegration: true, // 是否启用node集成 渲染进程的内容有访问node的能力
@@ -113,7 +114,6 @@ function createTray() {
             label: "打开面板", type: "normal", click() {
                 if (boardWindow) {
                     boardWindow.show();
-                    boardWindow.focus();
                 } else {
                     createBoardWindow();
                 }
@@ -137,18 +137,19 @@ function createTray() {
 function registerDefaultGlobalShortcut() {
     globalShortcut.register('Control+Shift+V', () => {
         if (boardWindow) {
-            if (boardWindow.isFocused()) {
+            if (boardWindow.isVisible()) {
                 boardWindow.hide();
             } else {
                 boardWindow.show();
-                boardWindow.focus();
             }
         }
-        // robot.keyToggle('control', 'up')
-        // robot.keyToggle('shift', 'up')
-        // robot.keyToggle('v', 'up')
-        // robot.keyTap('v', 'control')
     });
+}
+
+function registerSelectClip(){
+    ipcMain.on('select-clip', (event, data) => {
+        pasteClip(data);
+    })
 }
 
 app.on('ready', () => {
@@ -161,6 +162,7 @@ app.on('ready', () => {
     createBoardWindow();
     startDataClearJob();
     startClipboardListener(mainWindow, boardWindow);
+    registerSelectClip();
 });
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {

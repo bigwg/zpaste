@@ -13,7 +13,7 @@ function Clip(props) {
      * 双击剪贴板
      */
     function doubleClickClip() {
-
+        window.electronAPI.selectClip(props.data);
     }
 
     function clickClip() {

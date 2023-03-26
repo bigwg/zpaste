@@ -1,4 +1,5 @@
 const {clipboard, NativeImage} = require('electron');
+const robot = require("robotjs");
 
 let currentClipId = 5;
 let firstOpen = true;
@@ -33,6 +34,9 @@ function isDiffImage(beforeImage, afterImage) {
 }
 
 function handleHtmlText(textHtml, text) {
+    if (!!text){
+        return;
+    }
     //  判断内容是否与上次读取的内容不同
     if (isDiffText(beforeText, text)) {
         if (firstOpen){
@@ -86,4 +90,14 @@ function stopClipboardListener() {
     timer.clearInterval();
 }
 
-module.exports = {startClipboardListener, stopClipboardListener};
+function pasteClip(data){
+    clipboardWindow.hide()
+    robot.keyTap('v', 'control');
+
+    // clipboard.writeText(data.content);
+    // if (!!data.contentHtml){
+    //     clipboard.writeHTML(data.contentHtml)
+    // }
+}
+
+module.exports = {startClipboardListener, stopClipboardListener, pasteClip};
