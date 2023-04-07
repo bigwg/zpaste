@@ -1,5 +1,7 @@
-const {clipboard, NativeImage} = require('electron');
+const {CLIP_CATEGORY_TYPE, CLIP_MESSAGE_CHANNEL} = require('../common/backendConfigCons.js')
+const {clipboard, NativeImage, ipcMain} = require('electron');
 const robot = require("robotjs");
+const {addClip} = require('../data/clipboardData');
 
 let currentClipId = 5;
 let firstOpen = true;
@@ -27,14 +29,13 @@ function isDiffText(beforeText, afterText) {
  */
 function isDiffImage(beforeImage, afterImage) {
     if (!beforeImage){
-        return true;
+        return;
     }
     return beforeImage.toDataURL() !== afterImage.toDataURL();
-
 }
 
 function handleHtmlText(textHtml, text) {
-    if (!!text){
+    if (!text){
         return;
     }
     //  判断内容是否与上次读取的内容不同
@@ -48,7 +49,7 @@ function handleHtmlText(textHtml, text) {
         console.log(text);
         console.log(textHtml);
         currentClipId++;
-        let data = {clipId: currentClipId, category: '文本', copyTime: '43分钟前', appIcon: 1, content: text, contentHtml: textHtml};
+        let data = {clipId: currentClipId, category: CLIP_CATEGORY_TYPE.TEXT.name, copyTime: '43分钟前', appIcon: 1, content: text, contentHtml: textHtml};
         clipboardWindow.webContents.send('add-clipboard', data)
         //  记录此次内容
         beforeText = text;
@@ -72,6 +73,11 @@ function handleImage(image) {
 
 let timer;
 
+/**
+ * 开启剪贴板监听
+ * @param mainWindow
+ * @param boardWindow
+ */
 function startClipboardListener(mainWindow, boardWindow) {
     settingWindow = mainWindow;
     clipboardWindow = boardWindow;
@@ -90,14 +96,28 @@ function stopClipboardListener() {
     timer.clearInterval();
 }
 
+/**
+ *
+ * @param data
+ */
 function pasteClip(data){
-    clipboardWindow.hide()
+    clipboardWindow.hide();
+    clipboard.write({text: data.content, html: data.contentHtml});
     robot.keyTap('v', 'control');
-
-    // clipboard.writeText(data.content);
-    // if (!!data.contentHtml){
-    //     clipboard.writeHTML(data.contentHtml)
-    // }
 }
 
-module.exports = {startClipboardListener, stopClipboardListener, pasteClip};
+function registerMsgConsumer(){
+    ipcMain.on(CLIP_MESSAGE_CHANNEL.SELECT_CLIP, (event, data) => {
+        pasteClip(data);
+    });
+    ipcMain.on('select-clip', (event, data) => {
+        pasteClip(data);
+    })
+}
+
+module.exports = {
+    startClipboardListener,
+    stopClipboardListener,
+    pasteClip,
+    registerMsgConsumer
+};
