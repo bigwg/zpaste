@@ -59,12 +59,12 @@ function createBoardWindow(main) {
         width: 1600, // 窗口宽度
         height: 400, // 窗口高度
         x: 0,
-        y: 600,
+        y: 0,
         title: "zpaste", // 窗口标题,如果由loadURL()加载的HTML文件中含有标签<title>，该属性可忽略
         icon: nativeImage.createFromPath('src/public/favicon.ico'), // "string" || nativeImage.createFromPath('测试文本3src/image/icons/256x256.ico')从位于 path 的文件创建新的 NativeImage 实例
         show: false,
-        // frame: false,
-        // focusable: false,
+        frame: false,
+        focusable: false,
         movable: false,
         minimizable: false,
         maximizable: false,
@@ -154,7 +154,6 @@ app.on('ready', () => {
     createBoardWindow("true");
     startDataClearJob();
     startClipboardListener(mainWindow, boardWindow);
-    registerMsgConsumer();
     // 监听键盘事件
     uIOhook.on('keydown', (e) => {
         if (e.keycode === UiohookKey.Escape) {

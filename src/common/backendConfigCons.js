@@ -5,9 +5,13 @@ const CLIP_CATEGORY_TYPE = {
 };
 
 const CLIP_MESSAGE_CHANNEL = {
+    // 前端通知后端
     SELECT_CLIP: 'select_clip',
+    PAGE_CLIP: 'page_clip',
+    // 后端通知前端
     INIT_CLIP: 'init_clip',
-    ADD_CLIP: 'add_clip'
+    ADD_CLIP: 'add_clip',
+    REMOVE_CLIP: 'remove_clip',
 };
 
 module.exports = {

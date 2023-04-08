@@ -17,10 +17,18 @@ const clipboardDb = new Datastore({
  * @param doc
  * @param callback
  */
-function addClip(doc, callback) {
+function insertClip(doc, callback) {
     clipboardDb.insert(doc, function (err, newDoc) {
-        callback(newDoc)
+        callback(newDoc);
     });
+}
+
+/**
+ * 根据id删除数据
+ * @param id
+ */
+function deleteClip(id){
+    clipboardDb.remove({_id: id});
 }
 
 /**
@@ -32,9 +40,19 @@ function addClip(doc, callback) {
  */
 function pageQueryClips(text, pageNum, pageSize, callback) {
     let skipCount = (pageNum - 1) * pageSize;
-    clipboardDb.find({}).sort({_id: -1}).skip(skipCount).limit(pageSize).exec(function (err, docs) {
-        callback(docs)
+    clipboardDb.find({}).sort({copyTime: -1}).skip(skipCount).limit(pageSize).exec(function (err, docs) {
+        callback(docs);
     });
 }
 
-module.exports = {addClip, pageQueryClips};
+function deleteAll(){
+    clipboardDb.remove({}, { multi: true }, function (err, numRemoved) {
+    });
+}
+
+module.exports = {
+    insertClip,
+    deleteClip,
+    pageQueryClips,
+    deleteAll
+};

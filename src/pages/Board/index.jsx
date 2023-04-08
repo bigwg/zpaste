@@ -3,7 +3,7 @@ import './style.scss';
 import Category from "../../components/board/Category";
 import Clip from "../../components/board/Clip";
 import {useDispatch, useSelector} from "react-redux";
-import {addClip, initClip} from "../../store/clipboard.js";
+import {addClip, initClip, removeClip} from "../../store/clipboard.js";
 
 function Board(props) {
 
@@ -12,27 +12,33 @@ function Board(props) {
 
     const dispatch = useDispatch()
     // 使用state中的数据
-    const sortList = useSelector((state) => state.clipboard.sortList)
+    const clipList = useSelector((state) => state.clipboard.clipList)
 
     useEffect(() => {
         console.log(mainBoard)
 
         if (mainBoard === "true"){
+            console.log("mainBoard初始化");
             // 新增剪贴板
-            window.electronAPI.addClip((_event, value) => {
-                console.log('新增复制内容：', value)
-                dispatch(addClip(value))
+            window.electronAPI.addClip((_event, clip) => {
+                console.log('新增复制内容：', clip)
+                dispatch(addClip(clip))
             });
             // 初始化剪贴板
-            window.electronAPI.initClip((_event, value) => {
-                console.log('初始化剪贴板内容：', value)
-                dispatch(initClip(value))
+            window.electronAPI.initClip((_event, clips) => {
+                console.log('初始化剪贴板内容：', clips)
+                dispatch(initClip(clips))
+            });
+            // 移除剪贴板内容
+            window.electronAPI.removeClip((_event, clipId) => {
+                console.log('移除剪贴板内容：', clipId)
+                dispatch(removeClip(clipId))
             });
         }
     },[])
 
     const buildBoardWidth = () => {
-        let boardWidth = (sortList.length + 1) * 350;
+        let boardWidth = (clipList.length + 1) * 350;
         return boardWidth + 20;
     }
 
@@ -41,10 +47,10 @@ function Board(props) {
     }
 
     const buildClips = () => {
-        console.log(sortList)
+        console.log(clipList)
         let result = [];
-        for (const i in sortList) {
-            result.push(<Clip data={sortList[i]}/>)
+        for (const i in clipList) {
+            result.push(<Clip data={clipList[i]}/>)
         }
         return result;
     }
