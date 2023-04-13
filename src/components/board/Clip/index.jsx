@@ -7,6 +7,8 @@ function Clip(props) {
 
     const {clipId, category, copyTime, appIcon, content, contentHtml} = props.data;
 
+    const clipWidth = props.clipWidth;
+
     const [select, setSelect] = useState(false);
 
     /**
@@ -25,12 +27,33 @@ function Clip(props) {
 
     }
 
+    const titleHeight = Math.floor(clipWidth / 5);
+
+    const contextHeight = Math.floor(clipWidth * 4 / 5);
+
+    let clipStyle = {
+        width: `${clipWidth}px`,
+        height: `${clipWidth}px`,
+        border: "#d9d5d1 solid 2px"
+    }
+
+    let clipSelectStyle = {
+        ...clipStyle,
+        border: "#377af0 solid 2px"
+    }
+
     const iconBoxStyle =
         {
             float: "right",
-            height: "70px",
-            width: "70px",
+            width: `${titleHeight}px`,
+            height: `${titleHeight}px`,
             overflow: "hidden"
+        };
+
+    const clipTitleStyle =
+        {
+            width: `${clipWidth}px`,
+            height: `${titleHeight}px`,
         };
 
     const categoryBoxStyle =
@@ -50,9 +73,16 @@ function Clip(props) {
             marginLeft: "30px"
         };
 
+    const clipContextStyle =
+        {
+            width: `${clipWidth}px`,
+            height: `${contextHeight}px`
+        };
+
     return (
-        <div className={select ? "clip-select" : "clip"} onClick={clickClip} onDoubleClick={doubleClickClip}>
-            <div className="clip-title">
+        <div className="clip" style={select ? clipSelectStyle : clipStyle} onClick={clickClip}
+             onDoubleClick={doubleClickClip}>
+            <div className="clip-title" style={clipTitleStyle}>
                 <div style={{float: "left"}}>
                     <div style={categoryBoxStyle}>{category}</div>
                     <div style={copyTimeBoxStyle}>{copyTime}</div>
@@ -61,7 +91,7 @@ function Clip(props) {
                     <img src={Icon} className="app-icon"/>
                 </div>
             </div>
-            <div className="clip-context">{content}</div>
+            <div className="clip-context" style={clipContextStyle}>{content}</div>
         </div>
     )
 }

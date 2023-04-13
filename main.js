@@ -1,22 +1,20 @@
 const {
     app, BrowserWindow, nativeImage,
-    Tray, Menu, globalShortcut, ipcMain
+    Tray, Menu, globalShortcut, screen
 } = require('electron');
 const path = require('path');
 const startDataClearJob = require('./src/service/dataClearJob.js');
-const {
-    startClipboardListener, stopClipboardListener, registerMsgConsumer
-} = require('./src/service/clipboardService.js');
-const {uIOhook, UiohookKey} = require('uiohook-napi');
-const { screen } = require('electron');
-
+const {startClipboardListener} = require('./src/service/clipboardService.js');
+const {registerKmListener, stopKmListener} = require('./src/service/uiohookService.js');
 let mainWindow = null;
-let boardWindow = null;
+let boardWindows = {};
 let tray = null;
 
 // console.log(process.versions)
 
-// 创建主窗口（设置窗口）
+/**
+ * 创建主窗口
+ */
 function createMainWindow() {
     mainWindow = new BrowserWindow({
         width: 800, // 窗口宽度
@@ -29,7 +27,7 @@ function createMainWindow() {
             webviewTag: true, // 是否使用<webview>标签 在一个独立的 frame 和进程里显示外部 web 内容
             webSecurity: false, // 禁用同源策略
             nodeIntegrationInSubFrames: true, // 是否允许在子页面(iframe)或子窗口(child window)中集成Node.js
-            preload:path.join(__dirname,"./src/pages/Settings/preload.js")
+            preload: path.join(__dirname, "./src/pages/Settings/preload.js")
         }
     });
 
@@ -54,12 +52,19 @@ function createMainWindow() {
 }
 
 // 创建剪贴板窗口
-function createBoardWindow(main) {
-    boardWindow = new BrowserWindow({
-        width: 1600, // 窗口宽度
-        height: 400, // 窗口高度
-        x: 0,
-        y: 0,
+function createBoardWindow(main, display) {
+    let bounds = display.bounds;
+    let width = Math.floor(bounds.width);
+    let height = Math.floor(bounds.height * 4 / 10);
+    let workArea = display.workArea;
+    let x = workArea.x;
+    let y = workArea.y;
+    console.log("创建窗口：", display.id, ",display:", display, ",width:", width, ",height:", height)
+    let boardWindow = new BrowserWindow({
+        width: width, // 窗口宽度
+        height: height, // 窗口高度
+        x: x,
+        y: y,
         title: "zpaste", // 窗口标题,如果由loadURL()加载的HTML文件中含有标签<title>，该属性可忽略
         icon: nativeImage.createFromPath('src/public/favicon.ico'), // "string" || nativeImage.createFromPath('测试文本3src/image/icons/256x256.ico')从位于 path 的文件创建新的 NativeImage 实例
         show: false,
@@ -76,22 +81,32 @@ function createBoardWindow(main) {
             webviewTag: true, // 是否使用<webview>标签 在一个独立的 frame 和进程里显示外部 web 内容
             webSecurity: false, // 禁用同源策略
             nodeIntegrationInSubFrames: true, // 是否允许在子页面(iframe)或子窗口(child window)中集成Node.js
-            preload:path.join(__dirname,'src/pages/Board/preload.js')
+            preload: path.join(__dirname, 'src/pages/Board/preload.js')
         }
     });
 
     // 开发环境使用 http 协议 生产环境使用 file 协议
     if (process.env.NODE_ENV === 'dev') {
-        boardWindow.loadURL(`http://localhost:3000/#/board?mainBoard=${main}`);
+        boardWindow.loadURL(`http://localhost:3000/#/board?width=${width}&height=${height}`);
     } else {
         boardWindow.loadFile(`file://${__dirname}/index.html`, {hash: 'board', search: `mainBoard=${main}`});
     }
 
-    // 当窗口关闭时发出。在你收到这个事件后，你应该删除对窗口的引用，并避免再使用它。
-    boardWindow.on('close', (event) => {
-        event.preventDefault();
-        boardWindow.hide();
-    });
+    // 解决屏幕无法铺满的问题
+    boardWindow.setBounds({
+        width: width,
+        height: height,
+        x: x,
+        y: y,
+    })
+
+    let displayId = display.id;
+    if (main === 'true'){
+        boardWindows.mainBoardId = displayId;
+        boardWindows.mainBoard = boardWindow;
+    }
+
+    boardWindows.boards = {[displayId]: boardWindow, ...boardWindows.boards};
 
 }
 
@@ -113,8 +128,17 @@ function createTray() {
     const menuItems = [
         {
             label: "打开面板", type: "normal", click() {
-                if (boardWindow) {
-                    boardWindow.show();
+                if (boardWindows) {
+                    let cursorScreenPoint = screen.getCursorScreenPoint();
+                    let displayNearestPoint = screen.getDisplayNearestPoint(cursorScreenPoint);
+                    let boards = boardWindows.boards;
+                    let currentBoardWindow = boards[displayNearestPoint.id]
+                    currentBoardWindow.show();
+                    for (const board in boards) {
+                        if (board !== displayNearestPoint.id){
+                            boards[board].hide();
+                        }
+                    }
                 }
             }
         }, {
@@ -135,11 +159,14 @@ function createTray() {
 // 注册默认全局快捷键
 function registerDefaultGlobalShortcut() {
     globalShortcut.register('Control+Shift+V', () => {
-        if (boardWindow) {
-            if (boardWindow.isVisible()) {
-                boardWindow.hide();
+        if (boardWindows) {
+            let cursorScreenPoint = screen.getCursorScreenPoint();
+            let displayNearestPoint = screen.getDisplayNearestPoint(cursorScreenPoint);
+            let currentBoardWindow = boardWindows.boards[displayNearestPoint.id]
+            if (currentBoardWindow.isVisible()) {
+                currentBoardWindow.hide();
             } else {
-                boardWindow.show();
+                currentBoardWindow.show();
             }
         }
     });
@@ -147,29 +174,24 @@ function registerDefaultGlobalShortcut() {
 
 app.on('ready', () => {
     let primaryDisplay = screen.getPrimaryDisplay();
-    console.log('width:', primaryDisplay.size.width, ', height:', primaryDisplay.size.height);
+    let allDisplays = screen.getAllDisplays();
+    console.log("屏幕信息：", JSON.stringify(allDisplays));
     registerDefaultGlobalShortcut();
     createTray();
     createMainWindow();
-    createBoardWindow("true");
-    startDataClearJob();
-    startClipboardListener(mainWindow, boardWindow);
-    // 监听键盘事件
-    uIOhook.on('keydown', (e) => {
-        if (e.keycode === UiohookKey.Escape) {
-            if (boardWindow && boardWindow.isVisible()){
-                boardWindow.hide();
-            }
+    for (const displayKey in allDisplays) {
+        let display = allDisplays[displayKey]
+        if (displayKey === "0"){
+            createBoardWindow("true", display);
+        } else {
+            createBoardWindow("false", display);
         }
-    })
-    // 监听鼠标点击事件（所有按键）
-    // uIOhook.on('mousedown', (e) => {
-    //     console.log(e.button)
-    //     console.log('x:', e.x, ', y:', e.y)
-    // })
-
-    uIOhook.start()
+    }
+    startDataClearJob();
+    startClipboardListener(boardWindows);
+    registerKmListener(boardWindows);
 });
+
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin') {
         app.quit()
@@ -180,4 +202,9 @@ app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
         createMainWindow()
     }
+});
+
+app.on('quit', () => {
+    stopKmListener();
+
 });

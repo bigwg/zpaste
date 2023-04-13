@@ -10,6 +10,7 @@ export const clipboardSlice = createSlice({
     },
     // 定义的action。由于内置了immutable插件，可以直接使用赋值的方式进行数据的改变
     reducers: {
+        // 添加剪贴板
         addClip: (state, action) => {
             let add = action.payload;
             console.log("新增剪贴板add：", add)
@@ -18,11 +19,13 @@ export const clipboardSlice = createSlice({
             console.log("新增剪贴板result：", result)
             state.clipList = result
         },
+        // 初始化剪贴板
         initClip: (state, action) => {
             let initClip = action.payload;
             console.log("初始化剪贴板：", initClip)
             state.clipList = initClip;
         },
+        // 移除剪贴板
         removeClip: (state, action) => {
             let clipId = action.payload;
             let clipList = state.clipList;

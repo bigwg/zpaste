@@ -2,10 +2,12 @@ const {CLIP_CATEGORY_TYPE, CLIP_MESSAGE_CHANNEL} = require('../common/backendCon
 const {clipboard, NativeImage, ipcMain} = require('electron');
 const robot = require("robotjs");
 const {insertClip, deleteClip, pageQueryClips, deleteAll} = require('../data/clipboardData');
+const { windowManager } = require("node-window-manager");
+
 const duration = 500;
 
 let firstOpen = true;
-let beforeText, beforeImage, settingWindow, clipboardWindow, timer;
+let beforeText, beforeImage, boardWindows, timer;
 
 /**
  * 判断内容是否不一致
@@ -44,6 +46,8 @@ function handleHtmlText(textHtml, text) {
             firstOpen = false;
             return;
         }
+        const window = windowManager.getActiveWindow();
+        console.log("复制窗口title：", window.getTitle(), ", icon: ", window.getIcon())
         //  执行变动回调
         console.log(text);
         console.log(textHtml);
@@ -82,7 +86,7 @@ function addClip(text, textHtml) {
         contentHtml: textHtml
     };
     insertClip(doc, (newDoc) => {
-        clipboardWindow.webContents.send(CLIP_MESSAGE_CHANNEL.ADD_CLIP, newDoc)
+        boardWindows.mainBoard.webContents.send(CLIP_MESSAGE_CHANNEL.ADD_CLIP, newDoc)
     })
 
 }
@@ -92,15 +96,19 @@ function addClip(text, textHtml) {
  * @param data
  */
 function selectClip(data) {
-    // 写入剪贴板缓冲区
-    clipboardWindow.hide();
+    // 隐藏所有剪贴板窗口
+    let boards = boardWindows.boards;
+    for (let boardsKey in boards) {
+        let boardWin = boards[boardsKey];
+        boardWin.hide();
+    }
     clipboard.write({text: data.content, html: data.contentHtml});
     robot.keyTap('v', 'control');
     // 移除nedb中的数据和redux中的目标数据
     let clipId = data.clipId;
     console.log("选中要删除的文档id：", clipId)
     deleteClip(clipId);
-    clipboardWindow.webContents.send(CLIP_MESSAGE_CHANNEL.REMOVE_CLIP, clipId)
+    boardWindows.mainBoard.webContents.send(CLIP_MESSAGE_CHANNEL.REMOVE_CLIP, clipId)
 }
 
 /**
@@ -125,15 +133,17 @@ function registerMsgListener() {
     })
 }
 
+function notifyAllBoards(){
+
+}
+
 /**
  * 开启剪贴板监听
  * @param mainWindow
  * @param boardWindow
  */
-function startClipboardListener(mainWindow, boardWindow) {
-    settingWindow = mainWindow;
-    clipboardWindow = boardWindow;
-
+function startClipboardListener(boardWins) {
+    boardWindows = boardWins;
     //  设置定时器
     timer = setInterval(() => {
         let text = clipboard.readText();
@@ -144,17 +154,19 @@ function startClipboardListener(mainWindow, boardWindow) {
     }, duration);
     // deleteAll();
     // 初始化剪贴板列表
-    boardWindow.on('ready-to-show', (event) => {
-        pageQueryClips(null, 1, 20, (docs) => {
-            console.log("nedb中的文档：", JSON.stringify(docs));
-            for (let docsKey in docs) {
-                let doc = docs[docsKey];
-                doc.clipId = doc._id;
-            }
-            console.log("返回前端的文档：", JSON.stringify(docs));
-            clipboardWindow.webContents.send(CLIP_MESSAGE_CHANNEL.INIT_CLIP, docs)
-        })
-    });
+    let boards = boardWindows.boards;
+    for (let boardsKey in boards) {
+        let currentBoard = boards[boardsKey];
+        currentBoard.on('ready-to-show', (event) => {
+            pageQueryClips(null, 1, 20, (docs) => {
+                for (let docsKey in docs) {
+                    let doc = docs[docsKey];
+                    doc.clipId = doc._id;
+                }
+                currentBoard.webContents.send(CLIP_MESSAGE_CHANNEL.INIT_CLIP, docs)
+            })
+        });
+    }
     // 注册消息监听器
     registerMsgListener();
 }
