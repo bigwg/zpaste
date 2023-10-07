@@ -44,10 +44,23 @@ export const clipboardSlice = createSlice({
                 newClipList.push(clipData);
             }
             state.clipList = newClipList;
-        }
+        },
+        // 更新page信息
+        updatePageQuery: (state, action) => {
+            let pageQuery = action.payload;
+            let pageNum = pageQuery.pageNum;
+            let hasMore = pageQuery.hasMore;
+            let dataList = pageQuery.dataList;
+            let clipList = state.clipList;
+            let page = state.page;
+            page.pageNum = pageNum;
+            page.hasMore = hasMore;
+            clipList.push(...dataList)
+            state = {clipList: clipList, page: page};
+        },
     },
 })
 
-export const {addClip, appendClips, removeClip} = clipboardSlice.actions
+export const {addClip, appendClips, removeClip, updatePageQuery} = clipboardSlice.actions
 
 export default clipboardSlice.reducer

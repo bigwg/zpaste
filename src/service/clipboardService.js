@@ -123,6 +123,8 @@ async function pageQueryClip(queryParam) {
     if (queryResults.length < pageSize) {
         hasMore = false;
     }
+    let updatePageQuery = {pageNum: pageNum + 1, hasMore: hasMore, dataList: queryResults};
+    notifyAllBoards(CLIP_MESSAGE_CHANNEL.UPDATE_PAGE_QUERY, updatePageQuery);
     return {dataList: queryResults, hasMore: hasMore};
 }
 
@@ -135,9 +137,9 @@ function registerMsgListener() {
         selectClip(data);
     });
     // 注册前端翻页操作监听
-    ipcMain.handle(CLIP_MESSAGE_CHANNEL.PAGE_QUERY_CLIP, async (event, data) => {
+    ipcMain.on(CLIP_MESSAGE_CHANNEL.PAGE_QUERY_CLIP, (event, data) => {
         console.log("@@@@@@@@@@@@@@@@@@@@@@@@@收到PAGE_QUERY_CLIP请求")
-        return await pageQueryClip(data)
+        pageQueryClip(data)
     })
 }
 

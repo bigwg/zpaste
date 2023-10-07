@@ -4,12 +4,11 @@ import './style.scss';
 import Category from "../../components/board/Category";
 import Clip from "../../components/board/Clip";
 import {useDispatch, useSelector} from "react-redux";
-import {addClip, appendClips, removeClip, pageQueryClip} from "../../store/clipboard.js";
+import {addClip, appendClips, removeClip, updatePageQuery} from "../../store/clipboard.js";
 
 function Board(props) {
 
-    // const { mainBoard } = props.location;
-    const {width, height} = parseUrlParam(props.location.search);
+    const {width, height, displayId} = parseUrlParam(props.location.search);
     const clipWidth = Math.floor(height * 7 / 8);
 
     const dispatch = useDispatch()
@@ -37,9 +36,11 @@ function Board(props) {
     )
 
     const containerRef = useRef(null)
+    const boardListRef = useRef(null)
 
     const {run: tryLoadMore} = useDebounceFn(
         () => {
+            console.log("@@@@@@@@@@@@@@@@@@@@tryLoadMore");
             const elem = containerRef.current
             if (elem == null) return
             const domRect = elem.getBoundingClientRect()
@@ -76,16 +77,23 @@ function Board(props) {
             console.log('移除剪贴板内容：', clipId)
             dispatch(removeClip(clipId))
         });
+        // 更新pageQuery
+        window.electronAPI.updatePageQuery((_event, data) => {
+            console.log('更新pageQuery：', data)
+            dispatch(updatePageQuery(data))
+        });
     }, [])
 
     // 当页面滚动时，触发加载
     useEffect(() => {
         if (hasMore) {
-            window.addEventListener('scroll', tryLoadMore)
+            const boardListEle = boardListRef.current
+            boardListEle.addEventListener('scroll', tryLoadMore)
         }
 
         return () => {
-            window.removeEventListener('scroll', tryLoadMore)
+            const boardListEle = boardListRef.current
+            boardListEle.removeEventListener('scroll', tryLoadMore)
         }
     }, [hasMore])
 
@@ -101,7 +109,7 @@ function Board(props) {
 
     const loadStyle = {
         height: `${clipWidth}px`,
-        width: `200px`
+        width: `100px`
     }
 
     const LoadMoreContent = useMemo(() => {
@@ -123,11 +131,11 @@ function Board(props) {
         <>
             {/*<Category/>*/}
             <div className="board-wrapper" style={boardWrapper}>
-                <div className="board-list" style={boardList}>
+                <div className="board-list" style={boardList} ref={boardListRef}>
                     {buildClips()}
-                    {/*<div className="load" style={loadStyle} ref={containerRef}>*/}
-                    {/*    {LoadMoreContent}*/}
-                    {/*</div>*/}
+                    <div className="load" style={loadStyle} ref={containerRef}>
+                        {LoadMoreContent}
+                    </div>
                 </div>
             </div>
         </>

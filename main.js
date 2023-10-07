@@ -59,7 +59,8 @@ function createBoardWindow(main, display) {
     let workArea = display.workArea;
     let x = workArea.x;
     let y = workArea.y;
-    console.log("创建窗口：", display.id, ",display:", display, ",width:", width, ",height:", height)
+    let displayId = display.id;
+    console.log("创建窗口：", displayId, ",display:", display, ",width:", width, ",height:", height)
     let boardWindow = new BrowserWindow({
         width: width, // 窗口宽度
         height: height, // 窗口高度
@@ -87,9 +88,9 @@ function createBoardWindow(main, display) {
 
     // 开发环境使用 http 协议 生产环境使用 file 协议
     if (process.env.NODE_ENV === 'dev') {
-        boardWindow.loadURL(`http://localhost:3000/#/board?width=${width}&height=${height}`);
+        boardWindow.loadURL(`http://localhost:3000/#/board?width=${width}&height=${height}&displayId=${displayId}`);
     } else {
-        boardWindow.loadFile(`file://${__dirname}/index.html`, {hash: 'board', search: `mainBoard=${main}`});
+        boardWindow.loadFile(`file://${__dirname}/index.html`, {hash: 'board', search: `width=${width}&height=${height}&displayId=${displayId}`});
     }
 
     // 解决屏幕无法铺满的问题
@@ -100,12 +101,10 @@ function createBoardWindow(main, display) {
         y: y,
     })
 
-    let displayId = display.id;
     if (main === 'true') {
         boardWindows.mainBoardId = displayId;
         boardWindows.mainBoard = boardWindow;
     }
-
     boardWindows.boards = {[displayId]: boardWindow, ...boardWindows.boards};
 
 }
