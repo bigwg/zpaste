@@ -7,9 +7,10 @@ const CLIP_CATEGORY_TYPE = {
 const CLIP_MESSAGE_CHANNEL = {
     // 前端通知后端
     SELECT_CLIP: 'select_clip',
-    PAGE_CLIP: 'page_clip',
+    PAGE_QUERY_CLIP: 'page_query_clip',
     // 后端通知前端
-    INIT_CLIP: 'init_clip',
+    UPDATE_PAGE: 'update_page',
+    APPEND_CLIPS: 'append_clips',
     ADD_CLIP: 'add_clip',
     REMOVE_CLIP: 'remove_clip',
 };

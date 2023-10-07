@@ -1,22 +1,65 @@
-import React, {useEffect} from 'react';
+import React, {useEffect, useRef, useState, useMemo} from 'react';
+import {useDebounceFn, useRequest} from 'ahooks';
 import './style.scss';
 import Category from "../../components/board/Category";
 import Clip from "../../components/board/Clip";
 import {useDispatch, useSelector} from "react-redux";
-import {addClip, initClip, removeClip} from "../../store/clipboard.js";
+import {addClip, appendClips, removeClip, pageQueryClip} from "../../store/clipboard.js";
 
 function Board(props) {
 
     // const { mainBoard } = props.location;
-    const { width, height } = parseUrlParam(props.location.search);
+    const {width, height} = parseUrlParam(props.location.search);
     const clipWidth = Math.floor(height * 7 / 8);
 
     const dispatch = useDispatch()
     // 使用state中的数据
     const clipList = useSelector((state) => state.clipboard.clipList)
+    const pageNum = useSelector((state) => state.clipboard.page.pageNum);
+    const hasMore = useSelector((state) => state.clipboard.page.hasMore);
+
+    const [started, setStarted] = useState(false)
+
+    const {run: load, loading} = useRequest(
+        async () => {
+            const data = await window.electronAPI.pageQueryClip({
+                pageNum,
+                pageSize: 20
+            })
+            return data
+        },
+        {
+            manual: true,
+            onSuccess(result) {
+                setStarted(false);
+            },
+        }
+    )
+
+    const containerRef = useRef(null)
+
+    const {run: tryLoadMore} = useDebounceFn(
+        () => {
+            const elem = containerRef.current
+            if (elem == null) return
+            const domRect = elem.getBoundingClientRect()
+            if (domRect == null) return
+            const {right} = domRect
+            // 出现在视图内
+            console.log("!!!!right:", right);
+            console.log("!!!!document.body.clientWidth:", document.body.clientWidth)
+            if (right <= document.body.clientWidth) {
+                load() // 真正加载数据
+                setStarted(true)
+            }
+        },
+        {
+            wait: 500,
+        }
+    )
 
     useEffect(() => {
-        let info = "boardWindow初始化：width=" + width + ", height="+height+", clipWidth="+clipWidth;
+        let info = "boardWindow初始化：width=" + width + ", height=" + height + ", clipWidth=" + clipWidth;
         // alert(info)
         // 新增剪贴板
         window.electronAPI.addClip((_event, clip) => {
@@ -24,9 +67,9 @@ function Board(props) {
             dispatch(addClip(clip))
         });
         // 初始化剪贴板
-        window.electronAPI.initClip((_event, clips) => {
+        window.electronAPI.appendClips((_event, clips) => {
             console.log('初始化剪贴板内容：', clips)
-            dispatch(initClip(clips))
+            dispatch(appendClips(clips))
         });
         // 移除剪贴板内容
         window.electronAPI.removeClip((_event, clipId) => {
@@ -35,33 +78,40 @@ function Board(props) {
         });
     }, [])
 
-    const buildBoardWidth = () => {
-        let boardWidth = (clipList.length + 1) * clipWidth;
-        return boardWidth + 20;
-    }
+    // 当页面滚动时，触发加载
+    useEffect(() => {
+        if (hasMore) {
+            window.addEventListener('scroll', tryLoadMore)
+        }
 
-    const boardWwStyle = {
-        backgroundColor: "#d9d5d1",
+        return () => {
+            window.removeEventListener('scroll', tryLoadMore)
+        }
+    }, [hasMore])
+
+    const boardWrapper = {
         height: `${height}px`,
-        width: `${width}px`,
-        overflow: "hidden"
+        width: `${width}px`
     }
 
-    const boardWStyle = {
-        backgroundColor: "#d9d5d1",
-        height: `${height + 20}px`,
-        width: `${width}px`,
-        overflowX: "scroll"
+    const boardList = {
+        height: `${clipWidth + 23}px`,
+        width: `${width}px`
     }
 
-    const boardStyle = {
-        width: buildBoardWidth(),
-        backgroundColor: "#d9d5d1",
-        overflow: "hidden"
+    const loadStyle = {
+        height: `${clipWidth}px`,
+        width: `200px`
     }
+
+    const LoadMoreContent = useMemo(() => {
+        if (!started || loading) return <span>加载中...</span>
+        if (!hasMore) return <span>没有更多了...</span>
+        return <span>开始加载下一页...</span>
+    }, [started, loading, hasMore])
 
     const buildClips = () => {
-        console.log(clipList)
+        // console.log(clipList)
         let result = [];
         for (const i in clipList) {
             result.push(<Clip data={clipList[i]} clipWidth={clipWidth}/>)
@@ -70,16 +120,17 @@ function Board(props) {
     }
 
     return (
-
-        <div className="board-wrapper-wrapper" style={boardWwStyle}>
-            <div className="board-wrapper" style={boardWStyle}>
-                <div className="board" style={boardStyle}>
-                    {/*<Category/>*/}
+        <>
+            {/*<Category/>*/}
+            <div className="board-wrapper" style={boardWrapper}>
+                <div className="board-list" style={boardList}>
                     {buildClips()}
+                    {/*<div className="load" style={loadStyle} ref={containerRef}>*/}
+                    {/*    {LoadMoreContent}*/}
+                    {/*</div>*/}
                 </div>
             </div>
-        </div>
-
+        </>
     );
 }
 

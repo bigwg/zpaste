@@ -1,5 +1,14 @@
-.background{
-    background-color: #e5e5e5;
-    width: 500px;
-    height: 400px;
+.board-wrapper {
+  background-color: #d9d5d1;
+  box-sizing: border-box;
+}
+
+.board-list {
+  overflow-x: scroll;
+  overflow-y: hidden;
+  display: flex;
+}
+
+.load {
+  flex-shrink: 0;
 }

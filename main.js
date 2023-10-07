@@ -3,8 +3,8 @@ const {
     Tray, Menu, globalShortcut, screen
 } = require('electron');
 const path = require('path');
-const startDataClearJob = require('./src/service/dataClearJob.js');
-const {startClipboardListener} = require('./src/service/clipboardService.js');
+const {startDataClearJob, stopDataClearJob} = require('./src/service/dataClearJob.js');
+const {startClipboardListener, stopClipboardListener} = require('./src/service/clipboardService.js');
 const {registerKmListener, stopKmListener} = require('./src/service/uiohookService.js');
 let mainWindow = null;
 let boardWindows = {};
@@ -69,7 +69,7 @@ function createBoardWindow(main, display) {
         icon: nativeImage.createFromPath('src/public/favicon.ico'), // "string" || nativeImage.createFromPath('测试文本3src/image/icons/256x256.ico')从位于 path 的文件创建新的 NativeImage 实例
         show: false,
         frame: false,
-        focusable: false,
+        // focusable: false,
         movable: false,
         minimizable: false,
         maximizable: false,
@@ -101,7 +101,7 @@ function createBoardWindow(main, display) {
     })
 
     let displayId = display.id;
-    if (main === 'true'){
+    if (main === 'true') {
         boardWindows.mainBoardId = displayId;
         boardWindows.mainBoard = boardWindow;
     }
@@ -135,7 +135,7 @@ function createTray() {
                     let currentBoardWindow = boards[displayNearestPoint.id]
                     currentBoardWindow.show();
                     for (const board in boards) {
-                        if (board !== displayNearestPoint.id){
+                        if (board !== displayNearestPoint.id) {
                             boards[board].hide();
                         }
                     }
@@ -158,15 +158,23 @@ function createTray() {
 
 // 注册默认全局快捷键
 function registerDefaultGlobalShortcut() {
-    globalShortcut.register('Control+Shift+V', () => {
-        if (boardWindows) {
-            let cursorScreenPoint = screen.getCursorScreenPoint();
-            let displayNearestPoint = screen.getDisplayNearestPoint(cursorScreenPoint);
-            let currentBoardWindow = boardWindows.boards[displayNearestPoint.id]
-            if (currentBoardWindow.isVisible()) {
-                currentBoardWindow.hide();
+    globalShortcut.register('CommandOrControl+Shift+V', () => {
+        let cursorScreenPoint = screen.getCursorScreenPoint();
+        let displayNearestPoint = screen.getDisplayNearestPoint(cursorScreenPoint);
+        let displayId = displayNearestPoint.id;
+        let boards = boardWindows.boards;
+        for (let boardId in boards) {
+            let currentBoard = boards[boardId];
+            if (Object.is(boardId, JSON.stringify(displayId))) {
+                if (currentBoard.isVisible()) {
+                    currentBoard.hide();
+                } else {
+                    currentBoard.show();
+                }
             } else {
-                currentBoardWindow.show();
+                if (currentBoard.isVisible()) {
+                    currentBoard.hide();
+                }
             }
         }
     });
@@ -176,20 +184,30 @@ app.on('ready', () => {
     let primaryDisplay = screen.getPrimaryDisplay();
     let allDisplays = screen.getAllDisplays();
     console.log("屏幕信息：", JSON.stringify(allDisplays));
-    registerDefaultGlobalShortcut();
+
     createTray();
     createMainWindow();
     for (const displayKey in allDisplays) {
         let display = allDisplays[displayKey]
-        if (displayKey === "0"){
+        if (displayKey === "0") {
             createBoardWindow("true", display);
         } else {
             createBoardWindow("false", display);
         }
     }
-    startDataClearJob();
+    registerDefaultGlobalShortcut();
+    startDataClearJob(boardWindows);
     startClipboardListener(boardWindows);
     registerKmListener(boardWindows);
+    // if(Object.is(process.platform, "darwin")){
+    //     console.log('这是mac系统');
+    // }
+    // if(Object.is(process.platform, "win32")){
+    //     console.log('这是windows系统');
+    // }
+    // if(Object.is(process.platform, "linux")){
+    //     console.log('这是linux系统');
+    // }
 });
 
 app.on('window-all-closed', () => {
@@ -206,5 +224,6 @@ app.on('activate', () => {
 
 app.on('quit', () => {
     stopKmListener();
-
+    stopClipboardListener();
+    stopDataClearJob();
 });

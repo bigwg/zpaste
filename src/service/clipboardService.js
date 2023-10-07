@@ -1,8 +1,8 @@
 const {CLIP_CATEGORY_TYPE, CLIP_MESSAGE_CHANNEL} = require('../common/backendConfigCons.js')
 const {clipboard, NativeImage, ipcMain} = require('electron');
 const robot = require("robotjs");
-const {insertClip, deleteClip, pageQueryClips, deleteAll} = require('../data/clipboardData');
-const { windowManager } = require("node-window-manager");
+const {insertClip, deleteClip, pageQueryClips, deleteAll, countClips} = require('../data/clipboardData');
+const {windowManager} = require("node-window-manager");
 
 const duration = 500;
 
@@ -58,7 +58,7 @@ function handleHtmlText(textHtml, text) {
 }
 
 function handleImage(image) {
-//  判断内容是否与上次读取的内容不同
+    // 判断内容是否与上次读取的内容不同
     if (isDiffImage(beforeImage, image)) {
         if (firstOpen) {
             beforeImage = image;
@@ -86,7 +86,7 @@ function addClip(text, textHtml) {
         contentHtml: textHtml
     };
     insertClip(doc, (newDoc) => {
-        boardWindows.mainBoard.webContents.send(CLIP_MESSAGE_CHANNEL.ADD_CLIP, newDoc)
+        notifyAllBoards(CLIP_MESSAGE_CHANNEL.ADD_CLIP, newDoc);
     })
 
 }
@@ -108,15 +108,22 @@ function selectClip(data) {
     let clipId = data.clipId;
     console.log("选中要删除的文档id：", clipId)
     deleteClip(clipId);
-    boardWindows.mainBoard.webContents.send(CLIP_MESSAGE_CHANNEL.REMOVE_CLIP, clipId)
+    notifyAllBoards(CLIP_MESSAGE_CHANNEL.REMOVE_CLIP, clipId);
 }
 
 /**
  * 分页查询
  * @param data
  */
-function pageClip(data) {
-
+async function pageQueryClip(queryParam) {
+    let pageNum = queryParam.pageNum;
+    let pageSize = queryParam.pageSize;
+    let queryResults = await pageQueryClips(null, pageNum, pageSize);
+    let hasMore = true;
+    if (queryResults.length < pageSize) {
+        hasMore = false;
+    }
+    return {dataList: queryResults, hasMore: hasMore};
 }
 
 /**
@@ -128,13 +135,23 @@ function registerMsgListener() {
         selectClip(data);
     });
     // 注册前端翻页操作监听
-    ipcMain.on(CLIP_MESSAGE_CHANNEL.PAGE_CLIP, (event, data) => {
-        pageClip(data);
+    ipcMain.handle(CLIP_MESSAGE_CHANNEL.PAGE_QUERY_CLIP, async (event, data) => {
+        console.log("@@@@@@@@@@@@@@@@@@@@@@@@@收到PAGE_QUERY_CLIP请求")
+        return await pageQueryClip(data)
     })
 }
 
-function notifyAllBoards(){
-
+/**
+ * 通知所有剪贴板页面
+ * @param event
+ * @param data
+ */
+function notifyAllBoards(event, data) {
+    let boards = boardWindows.boards;
+    for (let boardsKey in boards) {
+        let currentBoard = boards[boardsKey];
+        currentBoard.webContents.send(event, data)
+    }
 }
 
 /**
@@ -158,12 +175,12 @@ function startClipboardListener(boardWins) {
     for (let boardsKey in boards) {
         let currentBoard = boards[boardsKey];
         currentBoard.on('ready-to-show', (event) => {
-            pageQueryClips(null, 1, 20, (docs) => {
+            pageQueryClips(null, 1, 20).then((docs) => {
                 for (let docsKey in docs) {
                     let doc = docs[docsKey];
                     doc.clipId = doc._id;
                 }
-                currentBoard.webContents.send(CLIP_MESSAGE_CHANNEL.INIT_CLIP, docs)
+                currentBoard.webContents.send(CLIP_MESSAGE_CHANNEL.APPEND_CLIPS, docs)
             })
         });
     }
@@ -172,7 +189,7 @@ function startClipboardListener(boardWins) {
 }
 
 function stopClipboardListener() {
-    timer.clearInterval();
+    clearInterval(timer);
 }
 
 module.exports = {

@@ -16,17 +16,19 @@ function registerKmListener(boardWins) {
             // esc按键隐藏全部窗口
             for (let boardsKey in boards) {
                 let boardWin = boards[boardsKey];
-                boardWin.hide();
+                if (boardWin.isVisible()) {
+                    boardWin.hide();
+                }
             }
         }
     })
     // 监听鼠标点击事件（所有按键）
-    uIOhook.on('mousedown', (e) => {
-        let cursorScreenPoint = screen.getCursorScreenPoint();
-        let displayNearestPoint = screen.getDisplayNearestPoint(cursorScreenPoint);
-        let currentBoardWindow = boardWindows.boards[displayNearestPoint.id]
-        console.log("鼠标点击：button=", e.button, ",point=x:", e.x, ",y:", e.y, ",window:", JSON.stringify(currentBoardWindow.getBounds()))
-    })
+    // uIOhook.on('mousedown', (e) => {
+    //     let cursorScreenPoint = screen.getCursorScreenPoint();
+    //     let displayNearestPoint = screen.getDisplayNearestPoint(cursorScreenPoint);
+    //     let currentBoardWindow = boardWindows.boards[displayNearestPoint.id]
+    //     console.log("鼠标点击：button=", e.button, ",point=x:", e.x, ",y:", e.y, ",window:", JSON.stringify(currentBoardWindow.getBounds()))
+    // })
 
     uIOhook.start()
 }

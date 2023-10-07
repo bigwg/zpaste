@@ -15,19 +15,25 @@ const clipboardDb = new Datastore({
 /**
  * 新增剪贴板
  * @param doc
- * @param callback
+ * @returns {Promise<unknown>}
  */
-function insertClip(doc, callback) {
-    clipboardDb.insert(doc, function (err, newDoc) {
-        callback(newDoc);
-    });
+async function insertClip(doc) {
+    return new Promise((resolve, reject) => {
+        clipboardDb.insert(doc, function (err, newDoc) {
+            if (err === null) {
+                resolve(newDoc);
+            } else {
+                reject(err);
+            }
+        });
+    })
 }
 
 /**
  * 根据id删除数据
  * @param id
  */
-function deleteClip(id){
+function deleteClip(id) {
     clipboardDb.remove({_id: id});
 }
 
@@ -36,23 +42,58 @@ function deleteClip(id){
  * @param text
  * @param pageNum
  * @param pageSize
- * @param callback
+ * @returns {Promise<unknown>}
  */
-function pageQueryClips(text, pageNum, pageSize, callback) {
-    let skipCount = (pageNum - 1) * pageSize;
-    clipboardDb.find({}).sort({copyTime: -1}).skip(skipCount).limit(pageSize).exec(function (err, docs) {
-        callback(docs);
-    });
+async function pageQueryClips(text, pageNum, pageSize) {
+    return new Promise((resolve, reject) => {
+        let skipCount = (pageNum - 1) * pageSize;
+        clipboardDb.find({}).sort({copyTime: -1}).skip(skipCount).limit(pageSize).exec(function (err, docs) {
+            if (err === null) {
+                resolve(docs);
+            } else {
+                reject(err);
+            }
+        });
+    })
 }
 
-function deleteAll(){
-    clipboardDb.remove({}, { multi: true }, function (err, numRemoved) {
-    });
+/**
+ * 分页查询剪贴板数据量
+ * @param text
+ * @returns {Promise<unknown>}
+ */
+async function countClips(text) {
+    return new Promise((resolve, reject) => {
+        clipboardDb.count({}, function (err, count) {
+            if (err === null) {
+                resolve(count);
+            } else {
+                reject(err);
+            }
+        });
+    })
+}
+
+/**
+ * 删除全部文档
+ * @returns {Promise<unknown>}
+ */
+async function deleteAll() {
+    return new Promise((resolve, reject) => {
+        clipboardDb.remove({}, {multi: true}, function (err, numRemoved) {
+            if (err === null) {
+                resolve(numRemoved);
+            } else {
+                reject(err);
+            }
+        });
+    })
 }
 
 module.exports = {
     insertClip,
     deleteClip,
+    countClips,
     pageQueryClips,
     deleteAll
 };

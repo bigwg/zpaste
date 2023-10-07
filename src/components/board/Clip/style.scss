@@ -1,8 +1,7 @@
 .clip{
-  float: left;
   border: #d9d5d1 solid 2px;
   border-radius: 10px 10px 10px 10px;
-  overflow: hidden;
+  flex-shrink: 0;
 }
 
 .clip-title{
@@ -27,5 +26,6 @@
 }
 
 .clip-context{
+  white-space: normal;
   background-color: #ffffff;
 }
