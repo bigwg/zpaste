@@ -1,14 +1,14 @@
 const {uIOhook, UiohookKey} = require("uiohook-napi");
 const {screen} = require('electron');
 
-let boardWindows = {};
+const {getBoardWindows} = require('../service/boardWindowService');
 
 /**
  * 注册键盘和鼠标监听
  * @param boardWindow
  */
-function registerKmListener(boardWins) {
-    boardWindows = boardWins;
+function registerKmListener() {
+    let boardWindows = getBoardWindows();
     let boards = boardWindows.boards;
     // 监听键盘事件
     uIOhook.on('keydown', (e) => {

@@ -1,13 +1,22 @@
-const {CLIP_CATEGORY_TYPE, CLIP_MESSAGE_CHANNEL} = require('../common/backendConfigCons.js')
-const {clipboard, NativeImage, ipcMain} = require('electron');
 const robot = require("robotjs");
-const {insertClip, deleteClip, pageQueryClips, deleteAll, countClips} = require('../data/clipboardData');
 const {windowManager} = require("node-window-manager");
+const {clipboard, NativeImage, ipcMain} = require('electron');
+
+const {CLIP_CATEGORY_TYPE, CLIP_MESSAGE_CHANNEL} = require('../common/backendConfigCons')
+const {getBoardWindows} = require('../service/boardWindowService');
+const {
+    insertClip,
+    deleteClip,
+    pageQueryClips,
+    deleteAll,
+    countClips,
+    getBoard
+} = require('../data/clipData');
 
 const duration = 500;
 
 let firstOpen = true;
-let beforeText, beforeImage, boardWindows, timer;
+let beforeText, beforeImage, timer;
 
 /**
  * 判断内容是否不一致
@@ -77,7 +86,7 @@ function handleImage(image) {
  * @param text
  * @param textHtml
  */
-function addClip(text, textHtml) {
+async function addClip(text, textHtml) {
     let doc = {
         category: CLIP_CATEGORY_TYPE.TEXT.name,
         copyTime: new Date().getTime(),
@@ -85,10 +94,9 @@ function addClip(text, textHtml) {
         content: text,
         contentHtml: textHtml
     };
-    insertClip(doc, (newDoc) => {
-        notifyAllBoards(CLIP_MESSAGE_CHANNEL.ADD_CLIP, newDoc);
-    })
-
+    // 新增
+    await insertClip(doc);
+    await notifyAllBoards(getBoard());
 }
 
 /**
@@ -97,6 +105,7 @@ function addClip(text, textHtml) {
  */
 function selectClip(data) {
     // 隐藏所有剪贴板窗口
+    let boardWindows = getBoardWindows();
     let boards = boardWindows.boards;
     for (let boardsKey in boards) {
         let boardWin = boards[boardsKey];
@@ -108,7 +117,16 @@ function selectClip(data) {
     let clipId = data.clipId;
     console.log("选中要删除的文档id：", clipId)
     deleteClip(clipId);
-    notifyAllBoards(CLIP_MESSAGE_CHANNEL.REMOVE_CLIP, clipId);
+    notifyAllBoards();
+}
+
+/**
+ * 初始化剪贴板
+ * @param boardKey
+ */
+function initClip(boardKey) {
+    // 用最新的board数据通知前端
+    notifyBoard(boardKey);
 }
 
 /**
@@ -123,8 +141,7 @@ async function pageQueryClip(queryParam) {
     if (queryResults.length < pageSize) {
         hasMore = false;
     }
-    let updatePageQuery = {pageNum: pageNum + 1, hasMore: hasMore, dataList: queryResults};
-    notifyAllBoards(CLIP_MESSAGE_CHANNEL.UPDATE_PAGE_QUERY, updatePageQuery);
+    notifyAllBoards();
     return {dataList: queryResults, hasMore: hasMore};
 }
 
@@ -133,6 +150,9 @@ async function pageQueryClip(queryParam) {
  */
 function registerMsgListener() {
     // 注册前端选择操作监听
+    ipcMain.on(CLIP_MESSAGE_CHANNEL.INIT_CLIP, (event, boardKey) => {
+        initClip(boardKey);
+    });
     ipcMain.on(CLIP_MESSAGE_CHANNEL.SELECT_CLIP, (event, data) => {
         selectClip(data);
     });
@@ -144,15 +164,29 @@ function registerMsgListener() {
 }
 
 /**
- * 通知所有剪贴板页面
+ * 通知所有剪贴板页面更新
  * @param event
  * @param data
  */
-function notifyAllBoards(event, data) {
+function notifyAllBoards(data = getBoard()) {
+    let boardWindows = getBoardWindows();
     let boards = boardWindows.boards;
     for (let boardsKey in boards) {
         let currentBoard = boards[boardsKey];
-        currentBoard.webContents.send(event, data)
+        currentBoard.webContents.send(CLIP_MESSAGE_CHANNEL.UPDATE_CLIP, data)
+    }
+}
+
+/**
+ * 通知剪贴板页面更新
+ * @param event
+ * @param data
+ */
+function notifyBoard(boardKey, data = getBoard()) {
+    let boardWindows = getBoardWindows();
+    let targetBoard = boardWindows.boards[boardKey];
+    if (targetBoard !== null) {
+        targetBoard.webContents.send(CLIP_MESSAGE_CHANNEL.UPDATE_CLIP, data)
     }
 }
 
@@ -161,9 +195,8 @@ function notifyAllBoards(event, data) {
  * @param mainWindow
  * @param boardWindow
  */
-function startClipboardListener(boardWins) {
-    boardWindows = boardWins;
-    //  设置定时器
+async function startClipboardListener() {
+    // 设置定时器
     timer = setInterval(() => {
         let text = clipboard.readText();
         let textHtml = clipboard.readHTML();
@@ -171,21 +204,6 @@ function startClipboardListener(boardWins) {
         let image = clipboard.readImage();
         handleImage(image);
     }, duration);
-    // deleteAll();
-    // 初始化剪贴板列表
-    let boards = boardWindows.boards;
-    for (let boardsKey in boards) {
-        let currentBoard = boards[boardsKey];
-        currentBoard.on('ready-to-show', (event) => {
-            pageQueryClips(null, 1, 20).then((docs) => {
-                for (let docsKey in docs) {
-                    let doc = docs[docsKey];
-                    doc.clipId = doc._id;
-                }
-                currentBoard.webContents.send(CLIP_MESSAGE_CHANNEL.APPEND_CLIPS, docs)
-            })
-        });
-    }
     // 注册消息监听器
     registerMsgListener();
 }

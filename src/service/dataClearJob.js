@@ -1,9 +1,11 @@
 const schedule = require('node-schedule');
 
-let boardWindows, refreshBoardJob, clearDataJob;
+const {getBoardWindows} = require('../service/boardWindowService');
 
-function startDataClearJob(boardWins) {
-    boardWindows = boardWins;
+let refreshBoardJob, clearDataJob;
+
+function startDataClearJob() {
+    let boardWindows = getBoardWindows();
     // 定时处理剪贴板历史数量，每隔30分钟处理一次，减少页面占用内存
     refreshBoardJob = schedule.scheduleJob('0 0/1 * * * *', function () {
         let now = new Date().toLocaleString();

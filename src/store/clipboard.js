@@ -9,6 +9,7 @@ export const clipboardSlice = createSlice({
         clipList: [],
         page: {
             pageNum: 1,
+            pageSize: 20,
             hasMore: true
         }
     },
