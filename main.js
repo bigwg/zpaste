@@ -2,17 +2,11 @@ const {
     app, BrowserWindow, nativeImage,
     Tray, Menu, globalShortcut, screen
 } = require('electron');
-const {startDataClearJob, stopDataClearJob} = require('./src/service/dataClearJob.js');
-const {startClipboardListener, stopClipboardListener} = require('./src/service/clipboardService.js');
-const {registerKmListener, stopKmListener} = require('./src/service/uiohookService.js');
-const {
-    createMainWindow,
-    createBoardWindow,
-    getMainWindow,
-    setMainWindow,
-    getBoardWindows,
-    setBoardWindows
-} = require('./src/service/boardWindowService');
+
+const {startDataClearJob, stopDataClearJob} = require('./src/service/dataClearJob');
+const {startClipboardListener, stopClipboardListener} = require('./src/service/clipboardService');
+const {registerKmListener, stopKmListener} = require('./src/service/uiohookService');
+const {createMainWindow, createBoardWindow, getMainWindow, getBoardWindows} = require('./src/service/boardWindowService');
 
 let tray = null;
 

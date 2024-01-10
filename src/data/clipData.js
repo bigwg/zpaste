@@ -1,8 +1,11 @@
 const Datastore = require('nedb');
 const path = require('path');
 const {app} = require('electron');
-const AwaitLock = require('await-lock');
-const lock = new AwaitLock();
+
+const {AwaitLock} = require('../utils/AwaitLock');
+
+const initBoardLock = new AwaitLock();
+const updateBoardLock = new AwaitLock();
 
 const clipDb = new Datastore({
     filename: path.join(app.getPath('userData'), '/zpasteClip.db'),
@@ -25,6 +28,7 @@ const boardDb = new Datastore({
 });
 
 const initBoardData = {
+    selectClip: null,
     clipList: [],
     page: {
         pageNum: 1,
@@ -44,11 +48,11 @@ async function getBoard() {
         return boardData;
     } else {
         // 初始化
-        await lock.acquireAsync();
+        await initBoardLock.acquireAsync();
         try {
             return await initBoard();
         } finally {
-            lock.release();
+            initBoardLock.release();
         }
     }
 }
@@ -71,17 +75,38 @@ async function insertClip(doc) {
         });
     })
     // 2、新增到board
-    let board = await getBoard();
-    board.clipList.unshift(insertDoc);
-    await updateBoard({...board});
+    await updateBoardLock.acquireAsync();
+    try {
+        let board = await getBoard();
+        board.clipList.unshift(insertDoc);
+        await updateBoard({...board});
+    } finally {
+        updateBoardLock.release();
+    }
 }
 
 /**
- * 根据id删除数据
+ * 选中clip
  * @param id
  * @return numRemoved
  */
-async function deleteClip(id) {
+async function selectClip(id) {
+    // 1、更新board
+    await updateBoardLock.acquireAsync();
+    try {
+        let board = await getBoard();
+        await updateBoard({...board, selectClip: id});
+    } finally {
+        updateBoardLock.release();
+    }
+}
+
+/**
+ * 粘贴指定clip
+ * @param id
+ * @return numRemoved
+ */
+async function pasteClip(id) {
     // 1、删除db中的数据
     let deletedNum = await new Promise((resolve, reject) => {
         clipDb.remove({_id: id}, function (err, numRemoved) {
@@ -93,9 +118,14 @@ async function deleteClip(id) {
         })
     });
     // 2、更新board
-    let board = await getBoard();
-    let newClipList = board.clipList.filter(item => item.id !== id);
-    await updateBoard({...board, clipList: newClipList});
+    await updateBoardLock.acquireAsync();
+    try {
+        let board = await getBoard();
+        let newClipList = board.clipList.filter(item => item._id !== id);
+        await updateBoard({...board, clipList: newClipList, selectClip: id});
+    } finally {
+        updateBoardLock.release();
+    }
 }
 
 /**
@@ -122,15 +152,22 @@ async function pageQueryClips(text, pageNum, pageSize) {
         });
     })
     // 2、更新board
-    let hasMore = true;
-    if (queryResults.length < pageSize) {
-        hasMore = false;
+    await updateBoardLock.acquireAsync();
+    try {
+        let hasMore = true;
+        if (queryResults.length < pageSize) {
+            hasMore = false;
+        }
+        console.log("pageQueryClips.queryResults:", queryResults)
+        let board = await getBoard();
+        let pageData = {pageSize: board.page.pageSize, pageNum: board.page.pageNum + 1, hasMore: hasMore};
+        let boardList = board.clipList;
+        boardList.push(...queryResults);
+        console.log("pageQueryClips.boardList:", boardList.length, ",", boardList)
+        await updateBoard({page: pageData, clipList: boardList});
+    } finally {
+        updateBoardLock.release();
     }
-    let board = await getBoard();
-    let pageData = {pageSize: board.page.pageSize, pageNum: board.page.pageNum + 1, hasMore: hasMore};
-    let boardList = board.clipList;
-    boardList.push(queryResults);
-    await updateBoard({page: pageData, clipList: boardList});
 }
 
 /**
@@ -194,24 +231,57 @@ async function initBoard() {
     boardData = await new Promise((resolve, reject) => {
         boardDb.findOne({system: 'board'}, function (err, doc) {
             if (err === null) {
-                resolve(doc.data);
+                if (doc === null || doc === undefined) {
+                    resolve(null);
+                } else {
+                    resolve(doc.data);
+                }
             } else {
                 reject(err);
             }
         });
     });
+    console.log("initBoard-------------++++++++++++++=========", boardData)
     if (boardData === null || boardData === undefined) {
-        let boardList = await pageQueryClips(null, 1, 20);
-        boardData = {...initBoardData, clipList: boardList};
+        let boardList = await new Promise((resolve, reject) => {
+            clipDb.find({}).sort({copyTime: -1}).skip(0).limit(20).exec(function (err, docs) {
+                if (err === null) {
+                    let result = [];
+                    docs.forEach(doc => {
+                        result.push({...doc, clipId: doc._id})
+                    })
+                    resolve(result);
+                } else {
+                    reject(err);
+                }
+            });
+        })
+        let hasMore = true;
+        if (boardList.length < 20) {
+            hasMore = false;
+        }
+        boardData = {page: {...initBoardData.page, hasMore: hasMore}, clipList: boardList};
     }
+    // 新增board值
+    await new Promise((resolve, reject) => {
+        boardDb.insert({system: 'board', data: boardData}, function (err, newDoc) {
+            if (err === null) {
+                resolve(newDoc);
+            } else {
+                reject(err);
+            }
+        });
+    })
+    console.log("initBoard-------------++++++++++++++=========finalfinal", boardData)
     return boardData;
 }
 
 module.exports = {
     insertClip,
-    deleteClip,
+    selectClip,
     countClips,
     pageQueryClips,
     deleteAll,
+    pasteClip,
     getBoard
 };

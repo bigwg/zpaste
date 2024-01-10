@@ -6,11 +6,10 @@ const {CLIP_MESSAGE_CHANNEL} = require('../../common/backendConfigCons.js')
  */
 contextBridge.exposeInMainWorld('electronAPI', {
     // 后端消息监听
-    addClip: (callback) => ipcRenderer.on(CLIP_MESSAGE_CHANNEL.ADD_CLIP, callback),
-    appendClips: (callback) => ipcRenderer.on(CLIP_MESSAGE_CHANNEL.APPEND_CLIPS, callback),
-    removeClip: (callback) => ipcRenderer.on(CLIP_MESSAGE_CHANNEL.REMOVE_CLIP, callback),
-    updatePageQuery: (callback) => ipcRenderer.on(CLIP_MESSAGE_CHANNEL.UPDATE_PAGE_QUERY, callback),
+    updateBoard: (callback) => ipcRenderer.on(CLIP_MESSAGE_CHANNEL.UPDATE_BOARD, callback),
     // 通知后端消息
-    selectClip: (clipData) => ipcRenderer.send(CLIP_MESSAGE_CHANNEL.SELECT_CLIP, clipData),
-    pageQueryClip: (queryParam) => ipcRenderer.send(CLIP_MESSAGE_CHANNEL.PAGE_QUERY_CLIP, queryParam)
+    selectClip: (clipId) => ipcRenderer.send(CLIP_MESSAGE_CHANNEL.SELECT_CLIP, clipId),
+    pasteClip: (clipData) => ipcRenderer.send(CLIP_MESSAGE_CHANNEL.PASTE_CLIP, clipData),
+    pageQueryClip: (queryParam) => ipcRenderer.send(CLIP_MESSAGE_CHANNEL.PAGE_QUERY_CLIP, queryParam),
+    initBoard: (boardKey) => ipcRenderer.send(CLIP_MESSAGE_CHANNEL.INIT_BOARD, boardKey),
 })

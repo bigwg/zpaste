@@ -7,24 +7,28 @@ function Clip(props) {
 
     const {clipId, category, copyTime, appIcon, content, contentHtml} = props.data;
 
-    const clipWidth = props.clipWidth;
+    const clipWidth = props.clipWidth * 4 / 5;
+
+    const marginWidth = props.clipWidth * 1 / 20;
 
     const [select, setSelect] = useState(false);
 
+    const dispatch = useDispatch();
+    // 使用state中的数据
+    const clipList = useSelector((state) => state.clipboard.clipList);
+
     /**
-     * 双击剪贴板
+     * 粘贴剪贴板
      */
-    function doubleClickClip() {
-        window.electronAPI.selectClip(props.data);
+    function pasteClip() {
+        window.electronAPI.pasteClip(props.data);
     }
 
-    function clickClip() {
-        if (select) {
-            setSelect(false);
-        } else {
-            setSelect(true);
-        }
-
+    /**
+     * 选中剪贴板
+     */
+    function selectClip() {
+        window.electronAPI.selectClip(clipId);
     }
 
     const titleHeight = Math.floor(clipWidth / 5);
@@ -32,6 +36,8 @@ function Clip(props) {
     const contextHeight = Math.floor(clipWidth * 4 / 5);
 
     let clipStyle = {
+        marginLeft: `${marginWidth}px`,
+        marginRight: `${marginWidth}px`,
         width: `${clipWidth}px`,
         height: `${clipWidth}px`,
         border: "#d9d5d1 solid 2px"
@@ -39,7 +45,7 @@ function Clip(props) {
 
     let clipSelectStyle = {
         ...clipStyle,
-        border: "#377af0 solid 2px"
+        border: "#377af0 solid 4px"
     }
 
     const iconBoxStyle =
@@ -80,8 +86,8 @@ function Clip(props) {
         };
 
     return (
-        <div className="clip" style={select ? clipSelectStyle : clipStyle} onClick={clickClip}
-             onDoubleClick={doubleClickClip}>
+        <div id={clipId} className="clip" style={select ? clipSelectStyle : clipStyle} onClick={selectClip}
+             onDoubleClick={pasteClip}>
             <div className="clip-title" style={clipTitleStyle}>
                 <div style={{float: "left"}}>
                     <div style={categoryBoxStyle}>{category}</div>

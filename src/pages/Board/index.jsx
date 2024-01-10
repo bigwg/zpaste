@@ -4,25 +4,25 @@ import './style.scss';
 import Category from "../../components/board/Category";
 import Clip from "../../components/board/Clip";
 import {useDispatch, useSelector} from "react-redux";
-import {addClip, appendClips, removeClip, updatePageQuery} from "../../store/clipboard.js";
+import {updateBoard} from "../../store/clipboard.js";
 
 function Board(props) {
 
     const {width, height, displayId} = parseUrlParam(props.location.search);
     const clipWidth = Math.floor(height * 7 / 8);
 
-    const dispatch = useDispatch()
+    const dispatch = useDispatch();
     // 使用state中的数据
-    const clipList = useSelector((state) => state.clipboard.clipList)
+    const clipList = useSelector((state) => state.clipboard.clipList);
     const pageNum = useSelector((state) => state.clipboard.page.pageNum);
     const hasMore = useSelector((state) => state.clipboard.page.hasMore);
 
-    const [started, setStarted] = useState(false)
+    const [started, setStarted] = useState(false);
 
     const {run: load, loading} = useRequest(
         async () => {
             const data = await window.electronAPI.pageQueryClip({
-                pageNum,
+                pageNum: pageNum + 1,
                 pageSize: 20
             })
             return data
@@ -60,28 +60,13 @@ function Board(props) {
     )
 
     useEffect(() => {
-        let info = "boardWindow初始化：width=" + width + ", height=" + height + ", clipWidth=" + clipWidth;
-        // alert(info)
-        // 新增剪贴板
-        window.electronAPI.addClip((_event, clip) => {
-            console.log('新增复制内容：', clip)
-            dispatch(addClip(clip))
+        // let info = "boardWindow初始化：width=" + width + ", height=" + height + ", clipWidth=" + clipWidth;
+        window.electronAPI.updateBoard((_event, data) => {
+            console.log('updateBoard：', data)
+            dispatch(updateBoard(data))
         });
-        // 初始化剪贴板
-        window.electronAPI.appendClips((_event, clips) => {
-            console.log('初始化剪贴板内容：', clips)
-            dispatch(appendClips(clips))
-        });
-        // 移除剪贴板内容
-        window.electronAPI.removeClip((_event, clipId) => {
-            console.log('移除剪贴板内容：', clipId)
-            dispatch(removeClip(clipId))
-        });
-        // 更新pageQuery
-        window.electronAPI.updatePageQuery((_event, data) => {
-            console.log('更新pageQuery：', data)
-            dispatch(updatePageQuery(data))
-        });
+        // 初始化页面数据
+        window.electronAPI.initBoard(displayId);
     }, [])
 
     // 当页面滚动时，触发加载
@@ -113,7 +98,7 @@ function Board(props) {
     }
 
     const LoadMoreContent = useMemo(() => {
-        if (!started || loading) return <span>加载中...</span>
+        if (started || loading) return <span>加载中...</span>
         if (!hasMore) return <span>没有更多了...</span>
         return <span>开始加载下一页...</span>
     }, [started, loading, hasMore])

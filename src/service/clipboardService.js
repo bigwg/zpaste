@@ -4,14 +4,8 @@ const {clipboard, NativeImage, ipcMain} = require('electron');
 
 const {CLIP_CATEGORY_TYPE, CLIP_MESSAGE_CHANNEL} = require('../common/backendConfigCons')
 const {getBoardWindows} = require('../service/boardWindowService');
-const {
-    insertClip,
-    deleteClip,
-    pageQueryClips,
-    deleteAll,
-    countClips,
-    getBoard
-} = require('../data/clipData');
+const {insertClip, selectClip: selectClipData, pasteClip: pasteClipData, pageQueryClips, getBoard} = require('../data/clipData');
+const {paste} = require("@testing-library/user-event/dist/paste");
 
 const duration = 500;
 
@@ -96,14 +90,14 @@ async function addClip(text, textHtml) {
     };
     // 新增
     await insertClip(doc);
-    await notifyAllBoards(getBoard());
+    notifyAllBoards();
 }
 
 /**
- * 选择历史剪贴板数据
+ * 粘贴历史剪贴板数据
  * @param data
  */
-function selectClip(data) {
+function pasteClip(data) {
     // 隐藏所有剪贴板窗口
     let boardWindows = getBoardWindows();
     let boards = boardWindows.boards;
@@ -116,7 +110,16 @@ function selectClip(data) {
     // 移除nedb中的数据和redux中的目标数据
     let clipId = data.clipId;
     console.log("选中要删除的文档id：", clipId)
-    deleteClip(clipId);
+    pasteClipData(clipId);
+    notifyAllBoards();
+}
+
+/**
+ * 选择历史剪贴板数据
+ * @param data
+ */
+function selectClip(clipId) {
+    selectClipData(clipId);
     notifyAllBoards();
 }
 
@@ -124,7 +127,9 @@ function selectClip(data) {
  * 初始化剪贴板
  * @param boardKey
  */
-function initClip(boardKey) {
+function initBoard(boardKey) {
+    let boardWindows = getBoardWindows();
+    console.log("boardKey:", boardKey, ", boardWindows:", boardWindows)
     // 用最新的board数据通知前端
     notifyBoard(boardKey);
 }
@@ -136,13 +141,8 @@ function initClip(boardKey) {
 async function pageQueryClip(queryParam) {
     let pageNum = queryParam.pageNum;
     let pageSize = queryParam.pageSize;
-    let queryResults = await pageQueryClips(null, pageNum, pageSize);
-    let hasMore = true;
-    if (queryResults.length < pageSize) {
-        hasMore = false;
-    }
+    await pageQueryClips(null, pageNum, pageSize);
     notifyAllBoards();
-    return {dataList: queryResults, hasMore: hasMore};
 }
 
 /**
@@ -150,11 +150,14 @@ async function pageQueryClip(queryParam) {
  */
 function registerMsgListener() {
     // 注册前端选择操作监听
-    ipcMain.on(CLIP_MESSAGE_CHANNEL.INIT_CLIP, (event, boardKey) => {
-        initClip(boardKey);
+    ipcMain.on(CLIP_MESSAGE_CHANNEL.INIT_BOARD, (event, boardKey) => {
+        initBoard(boardKey);
     });
     ipcMain.on(CLIP_MESSAGE_CHANNEL.SELECT_CLIP, (event, data) => {
         selectClip(data);
+    });
+    ipcMain.on(CLIP_MESSAGE_CHANNEL.PASTE_CLIP, (event, data) => {
+        pasteClip(data);
     });
     // 注册前端翻页操作监听
     ipcMain.on(CLIP_MESSAGE_CHANNEL.PAGE_QUERY_CLIP, (event, data) => {
@@ -165,28 +168,35 @@ function registerMsgListener() {
 
 /**
  * 通知所有剪贴板页面更新
- * @param event
  * @param data
  */
-function notifyAllBoards(data = getBoard()) {
+async function notifyAllBoards(data) {
+    if (data === undefined){
+        data = await getBoard();
+    }
     let boardWindows = getBoardWindows();
     let boards = boardWindows.boards;
     for (let boardsKey in boards) {
         let currentBoard = boards[boardsKey];
-        currentBoard.webContents.send(CLIP_MESSAGE_CHANNEL.UPDATE_CLIP, data)
+        currentBoard.webContents.send(CLIP_MESSAGE_CHANNEL.UPDATE_BOARD, data)
     }
 }
 
 /**
  * 通知剪贴板页面更新
- * @param event
+ * @param boardKey
  * @param data
  */
-function notifyBoard(boardKey, data = getBoard()) {
+async function notifyBoard(boardKey, data) {
+    if (data === undefined){
+        data = await getBoard();
+    }
+    console.log("notifyBoard - boardKey: ", boardKey, ", data:", data)
     let boardWindows = getBoardWindows();
     let targetBoard = boardWindows.boards[boardKey];
+    console.log("notifyBoard----------------targetBoard:", targetBoard)
     if (targetBoard !== null) {
-        targetBoard.webContents.send(CLIP_MESSAGE_CHANNEL.UPDATE_CLIP, data)
+        targetBoard.webContents.send(CLIP_MESSAGE_CHANNEL.UPDATE_BOARD, data)
     }
 }
 

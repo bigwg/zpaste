@@ -66,7 +66,7 @@ function createBoardWindow(main, display) {
         icon: nativeImage.createFromPath('src/public/favicon.ico'), // "string" || nativeImage.createFromPath('测试文本3src/image/icons/256x256.ico')从位于 path 的文件创建新的 NativeImage 实例
         show: false,
         frame: false,
-        // focusable: false,
+        focusable: false,
         movable: false,
         minimizable: false,
         maximizable: false,
@@ -78,7 +78,7 @@ function createBoardWindow(main, display) {
             webviewTag: true, // 是否使用<webview>标签 在一个独立的 frame 和进程里显示外部 web 内容
             webSecurity: false, // 禁用同源策略
             nodeIntegrationInSubFrames: true, // 是否允许在子页面(iframe)或子窗口(child window)中集成Node.js
-            preload: path.join(__dirname, 'src/pages/Board/preload.js')
+            preload: path.join(__dirname, '../pages/Board/preload.js')
         }
     });
 
