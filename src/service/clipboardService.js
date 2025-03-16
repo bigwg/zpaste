@@ -3,7 +3,7 @@ const {windowManager} = require("node-window-manager");
 const {clipboard, NativeImage, ipcMain} = require('electron');
 
 const {CLIP_CATEGORY_TYPE, CLIP_MESSAGE_CHANNEL} = require('../common/backendConfigCons')
-const {getBoardWindows} = require('../service/boardWindowService');
+const {getBoardWindows} = require('./windowService');
 const {insertClip, selectClip: selectClipData, pasteClip: pasteClipData, pageQueryClips, getBoard} = require('../data/clipData');
 const {paste} = require("@testing-library/user-event/dist/paste");
 
@@ -97,7 +97,7 @@ async function addClip(text, textHtml) {
  * 粘贴历史剪贴板数据
  * @param data
  */
-function pasteClip(data) {
+async function pasteClip(data) {
     // 隐藏所有剪贴板窗口
     let boardWindows = getBoardWindows();
     let boards = boardWindows.boards;
@@ -110,7 +110,7 @@ function pasteClip(data) {
     // 移除nedb中的数据和redux中的目标数据
     let clipId = data.clipId;
     console.log("选中要删除的文档id：", clipId)
-    pasteClipData(clipId);
+    await pasteClipData(clipId);
     notifyAllBoards();
 }
 
@@ -118,8 +118,8 @@ function pasteClip(data) {
  * 选择历史剪贴板数据
  * @param data
  */
-function selectClip(clipId) {
-    selectClipData(clipId);
+async function selectClip(clipId) {
+    await selectClipData(clipId);
     notifyAllBoards();
 }
 

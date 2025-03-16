@@ -14,7 +14,17 @@ const CLIP_MESSAGE_CHANNEL = {
     UPDATE_BOARD: 'update_board',
 };
 
+const SETTINGS_MESSAGE_CHANNEL = {
+    // 前端通知后端
+    GET_SETTINGS: 'get-settings',
+    SAVE_SETTINGS: 'save-settings',
+    RESET_SETTINGS: 'reset-settings',
+    GET_SYSTEM_INFO: 'get-system-info',
+    OPEN_EXTERNAL_LINK: 'open-external-link',
+};
+
 module.exports = {
     CLIP_CATEGORY_TYPE,
-    CLIP_MESSAGE_CHANNEL
-}
+    CLIP_MESSAGE_CHANNEL,
+    SETTINGS_MESSAGE_CHANNEL
+};

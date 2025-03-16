@@ -1,4 +1,4 @@
-const { contextBridge, ipcRenderer } = require('electron')
+const {contextBridge, ipcRenderer} = require('electron')
 const {CLIP_MESSAGE_CHANNEL} = require('../../common/backendConfigCons.js')
 
 /**

@@ -1,7 +1,7 @@
 const {uIOhook, UiohookKey} = require("uiohook-napi");
 const {screen} = require('electron');
 
-const {getBoardWindows} = require('../service/boardWindowService');
+const {getBoardWindows} = require('./windowService');
 
 /**
  * 注册键盘和鼠标监听

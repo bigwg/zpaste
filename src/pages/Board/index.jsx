@@ -7,7 +7,6 @@ import {useDispatch, useSelector} from "react-redux";
 import {updateBoard} from "../../store/clipboard.js";
 
 function Board(props) {
-
     const {width, height, displayId} = parseUrlParam(props.location.search);
     const clipWidth = Math.floor(height * 7 / 8);
 
@@ -18,6 +17,7 @@ function Board(props) {
     const hasMore = useSelector((state) => state.clipboard.page.hasMore);
 
     const [started, setStarted] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
 
     const {run: load, loading} = useRequest(
         async () => {
@@ -40,15 +40,12 @@ function Board(props) {
 
     const {run: tryLoadMore} = useDebounceFn(
         () => {
-            console.log("@@@@@@@@@@@@@@@@@@@@tryLoadMore");
             const elem = containerRef.current
             if (elem == null) return
             const domRect = elem.getBoundingClientRect()
             if (domRect == null) return
             const {right} = domRect
             // 出现在视图内
-            console.log("!!!!right:", right);
-            console.log("!!!!document.body.clientWidth:", document.body.clientWidth)
             if (right <= document.body.clientWidth) {
                 load() // 真正加载数据
                 setStarted(true)
@@ -60,9 +57,7 @@ function Board(props) {
     )
 
     useEffect(() => {
-        // let info = "boardWindow初始化：width=" + width + ", height=" + height + ", clipWidth=" + clipWidth;
         window.electronAPI.updateBoard((_event, data) => {
-            console.log('updateBoard：', data)
             dispatch(updateBoard(data))
         });
         // 初始化页面数据
@@ -97,33 +92,69 @@ function Board(props) {
         width: `100px`
     }
 
+    const filteredClips = useMemo(() => {
+        if (!searchTerm.trim()) return clipList;
+        return clipList.filter(clip => 
+            clip.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            clip.category.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+    }, [clipList, searchTerm]);
+
     const LoadMoreContent = useMemo(() => {
-        if (started || loading) return <span>加载中...</span>
-        if (!hasMore) return <span>没有更多了...</span>
-        return <span>开始加载下一页...</span>
+        if (started || loading) return <span className="loading">加载中...</span>
+        if (!hasMore) return <span>没有更多内容</span>
+        return <span>滑动加载更多</span>
     }, [started, loading, hasMore])
 
     const buildClips = () => {
-        // console.log(clipList)
         let result = [];
-        for (const i in clipList) {
-            result.push(<Clip data={clipList[i]} clipWidth={clipWidth}/>)
+        for (const i in filteredClips) {
+            result.push(<Clip key={filteredClips[i].clipId} data={filteredClips[i]} clipWidth={clipWidth}/>)
         }
         return result;
     }
 
+    const handleSearch = (e) => {
+        setSearchTerm(e.target.value);
+    }
+
     return (
-        <>
-            {/*<Category/>*/}
-            <div className="board-wrapper" style={boardWrapper}>
-                <div className="board-list" style={boardList} ref={boardListRef}>
-                    {buildClips()}
-                    <div className="load" style={loadStyle} ref={containerRef}>
-                        {LoadMoreContent}
-                    </div>
+        <div className="board-wrapper" style={boardWrapper}>
+            <div className="board-header">
+                <div className="search-container">
+                    <input 
+                        type="text" 
+                        className="search-input" 
+                        placeholder="搜索剪贴板内容..." 
+                        value={searchTerm}
+                        onChange={handleSearch}
+                    />
+                    {searchTerm && (
+                        <button 
+                            className="clear-search" 
+                            onClick={() => setSearchTerm('')}
+                        >
+                            ×
+                        </button>
+                    )}
                 </div>
             </div>
-        </>
+            <div className="board-list" style={boardList} ref={boardListRef}>
+                {filteredClips.length > 0 ? (
+                    <>
+                        {buildClips()}
+                        <div className="load" style={loadStyle} ref={containerRef}>
+                            {LoadMoreContent}
+                        </div>
+                    </>
+                ) : (
+                    <div className="empty-state">
+                        <div className="empty-icon">📋</div>
+                        <p>没有找到匹配的剪贴板内容</p>
+                    </div>
+                )}
+            </div>
+        </div>
     );
 }
 

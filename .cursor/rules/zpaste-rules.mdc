@@ -1,0 +1,13 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# 项目介绍
+这是一个支持mac、win、linux三端的剪贴板历史工具，可以记录剪贴板历史内容，支持选中剪贴板历史直接粘贴到当前激活的窗口中
+技术栈：electron、react、robotjs、nedb、ahooks
+
+# 工程介绍
+- 所有的前端组件放在 @components 目录中
+- 所有的前端页面放在 @pages 目录中
+- 后端相关代码放在 @service 目录中

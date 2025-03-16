@@ -95,6 +95,7 @@ async function selectClip(id) {
     await updateBoardLock.acquireAsync();
     try {
         let board = await getBoard();
+        console.log("selectClip更新board，clipId：", id)
         await updateBoard({...board, selectClip: id});
     } finally {
         updateBoardLock.release();

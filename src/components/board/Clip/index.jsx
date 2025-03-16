@@ -1,21 +1,20 @@
 import React, {useState} from 'react';
 import {useSelector, useDispatch} from 'react-redux'
 import './style.scss';
-import Icon from './icon.png'
 
 function Clip(props) {
-
     const {clipId, category, copyTime, appIcon, content, contentHtml} = props.data;
 
-    const clipWidth = props.clipWidth * 4 / 5;
+    const clipSide = props.clipWidth * 4 / 5;
+    const clipBoard = clipSide / 50;
+    const clipBoardSide = clipSide + 2 * clipBoard;
 
     const marginWidth = props.clipWidth * 1 / 20;
-
-    const [select, setSelect] = useState(false);
+    const marginTop = props.clipWidth * 1 / 20;
 
     const dispatch = useDispatch();
     // 使用state中的数据
-    const clipList = useSelector((state) => state.clipboard.clipList);
+    const selectClipId = useSelector((state) => state.clipboard.selectClip);
 
     /**
      * 粘贴剪贴板
@@ -31,73 +30,91 @@ function Clip(props) {
         window.electronAPI.selectClip(clipId);
     }
 
-    const titleHeight = Math.floor(clipWidth / 5);
+    function selected() {
+        if (selectClipId == null) {
+            return false;
+        }
+        if (JSON.stringify(selectClipId) === JSON.stringify(clipId)) {
+            return true;
+        }
+        return false;
+    }
 
-    const contextHeight = Math.floor(clipWidth * 4 / 5);
+    const titleHeight = Math.floor(clipSide / 5);
+    const contextHeight = Math.floor(clipSide * 4 / 5);
 
-    let clipStyle = {
+    let clipBoxStyle = {
+        marginTop: `${marginTop}px`,
         marginLeft: `${marginWidth}px`,
         marginRight: `${marginWidth}px`,
-        width: `${clipWidth}px`,
-        height: `${clipWidth}px`,
-        border: "#d9d5d1 solid 2px"
+        width: `${clipBoardSide}px`,
+        height: `${clipBoardSide}px`,
     }
 
-    let clipSelectStyle = {
-        ...clipStyle,
-        border: "#377af0 solid 4px"
+    let clipBorderStyle = {
+        top: `0px`,
+        left: `0px`,
+        width: `${clipBoardSide}px`,
+        height: `${clipBoardSide}px`,
+        backgroundColor: "transparent",
+        boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)"
     }
 
-    const iconBoxStyle =
-        {
-            float: "right",
-            width: `${titleHeight}px`,
-            height: `${titleHeight}px`,
-            overflow: "hidden"
-        };
+    let clipStyle = {
+        top: `${clipBoard}px`,
+        left: `${clipBoard}px`,
+        width: `${clipSide}px`,
+        height: `${clipSide}px`
+    }
 
-    const clipTitleStyle =
-        {
-            width: `${clipWidth}px`,
-            height: `${titleHeight}px`,
-        };
+    let clipSelectedStyle = {
+        ...clipBorderStyle,
+        backgroundColor: "transparent",
+        boxShadow: `0 0 0 2px #0071E3, 0 4px 12px rgba(0, 113, 227, 0.2)`
+    }
 
-    const categoryBoxStyle =
-        {
-            color: "#ffffff",
-            fontFamily: "Fantasy",
-            fontWeight: "500",
-            fontSize: "25px",
-            marginTop: "10px",
-            marginLeft: "30px"
-        };
+    const clipTitleStyle = {
+        width: `${clipSide}px`,
+        height: `${titleHeight}px`,
+    };
 
-    const copyTimeBoxStyle =
-        {
-            color: "#ffffff",
-            fontSize: "12px",
-            marginLeft: "30px"
-        };
+    const clipContextStyle = {
+        width: `${clipSide}px`,
+        height: `${contextHeight}px`
+    };
 
-    const clipContextStyle =
-        {
-            width: `${clipWidth}px`,
-            height: `${contextHeight}px`
-        };
+    // Format the content to handle different types of data
+    const formatContent = () => {
+        if (!content) return "无内容";
+        
+        // If it's likely HTML content but we're showing as text
+        if (content.includes('<') && content.includes('>')) {
+            // Simple strip of HTML tags for display
+            return content.replace(/<[^>]*>/g, ' ').trim();
+        }
+        
+        return content;
+    };
 
     return (
-        <div id={clipId} className="clip" style={select ? clipSelectStyle : clipStyle} onClick={selectClip}
-             onDoubleClick={pasteClip}>
-            <div className="clip-title" style={clipTitleStyle}>
-                <div style={{float: "left"}}>
-                    <div style={categoryBoxStyle}>{category}</div>
-                    <div style={copyTimeBoxStyle}>{copyTime}</div>
+        <div className="clip-box" style={clipBoxStyle}>
+            <div className="clip-border" style={selected() ? clipSelectedStyle : clipBorderStyle}/>
+            <div className="clip" style={clipStyle} onClick={selectClip} onDoubleClick={pasteClip}>
+                <div className="clip-title" style={clipTitleStyle}>
+                    <div className="clip-title-content">
+                        <div className="category-box">{category || "文本"}</div>
+                        <div className="copy-time-box">{copyTime}</div>
+                    </div>
+                    {appIcon && (
+                        <div className="icon-box">
+                            <img className="app-icon" src={appIcon} alt="App Icon" />
+                        </div>
+                    )}
                 </div>
-                <div style={iconBoxStyle}>
-                    <img src={Icon} className="app-icon"/>
+                <div className="clip-context" style={clipContextStyle}>
+                    {formatContent()}
                 </div>
             </div>
-            <div className="clip-context" style={clipContextStyle}>{content}</div>
         </div>
     )
 }

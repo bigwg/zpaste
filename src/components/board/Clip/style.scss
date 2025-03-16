@@ -1,31 +1,93 @@
-.clip{
-  border: #d9d5d1 solid 2px;
-  border-radius: 10px 10px 10px 10px;
+.clip-box{
+  position: relative;
+  border-radius: 12px;
   flex-shrink: 0;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+  }
+}
+
+.clip-border{
+  position: absolute;
+  z-index: 1;
+  border-radius: 12px;
+  flex-shrink: 0;
+  transition: background-color 0.2s ease;
+}
+
+.clip{
+  position: absolute;
+  z-index: 2;
+  border: none;
+  border-radius: 12px;
+  flex-shrink: 0;
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+  
+  &:active {
+    transform: scale(0.98);
+  }
 }
 
 .clip-title{
-  background-color: #4a8cf5;
+  background: linear-gradient(135deg, #0071E3, #42A1EC);
+  border-radius: 12px 12px 0 0;
+  padding: 12px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 
-  .category{
-
+  .clip-title-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
   }
 
-  .copy-time{
+  .category-box{
+    color: #ffffff;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    font-weight: 500;
+    font-size: 16px;
+    margin: 0;
+  }
 
+  .copy-time-box{
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 12px;
+    margin-top: 4px;
+    font-weight: 400;
+  }
+
+  .icon-box{
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .app-icon{
-    float: right;
-    margin-top: -15px;
-    margin-right: -20px;
-    height: 100px;
-    width: 100px;
+    height: 32px;
+    width: 32px;
+    object-fit: contain;
   }
-
 }
 
 .clip-context{
+  border-radius: 0 0 12px 12px;
   white-space: normal;
   background-color: #ffffff;
+  padding: 12px 16px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  font-size: 14px;
+  color: #1D1D1F;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 6;
+  -webkit-box-orient: vertical;
 }

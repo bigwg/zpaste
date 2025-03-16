@@ -6,7 +6,8 @@ const {
 const {startDataClearJob, stopDataClearJob} = require('./src/service/dataClearJob');
 const {startClipboardListener, stopClipboardListener} = require('./src/service/clipboardService');
 const {registerKmListener, stopKmListener} = require('./src/service/uiohookService');
-const {createMainWindow, createBoardWindow, getMainWindow, getBoardWindows} = require('./src/service/boardWindowService');
+const {createMainWindow, createBoardWindow, getMainWindow, getBoardWindows} = require('./src/service/windowService');
+const {startSettingsService} = require('./src/service/settingsService');
 
 let tray = null;
 
@@ -46,6 +47,24 @@ function createTray() {
                 }
             }
         }, {
+            label: "设置", type: "normal", click() {
+                let mainWindow = getMainWindow();
+                if (mainWindow) {
+                    mainWindow.show();
+                    mainWindow.focus();
+                    mainWindow.webContents.send('navigate-to-settings');
+                } else {
+                    createMainWindow();
+                    // 等待窗口创建完成后再发送消息
+                    setTimeout(() => {
+                        let win = getMainWindow();
+                        if (win) {
+                            win.webContents.send('navigate-to-settings');
+                        }
+                    }, 500);
+                }
+            }
+        }, {
             label: "退出", type: "normal", click() {
                 app.exit();
             }
@@ -57,32 +76,30 @@ function createTray() {
     tray.on("right-click", () => {
         tray.popUpContextMenu(menu);
     })
-
 }
 
 // 注册默认全局快捷键
 function registerDefaultGlobalShortcut() {
-    globalShortcut.register('CommandOrControl+Shift+V', () => {
-        let cursorScreenPoint = screen.getCursorScreenPoint();
-        let displayNearestPoint = screen.getDisplayNearestPoint(cursorScreenPoint);
-        let displayId = displayNearestPoint.id;
+    // 注册快捷键
+    globalShortcut.register('Alt+Space', () => {
         let boardWindows = getBoardWindows();
-        let boards = boardWindows.boards;
-        for (let boardId in boards) {
-            let currentBoard = boards[boardId];
-            if (Object.is(boardId, JSON.stringify(displayId))) {
-                if (currentBoard.isVisible()) {
-                    currentBoard.hide();
-                } else {
-                    currentBoard.show();
-                }
+        if (boardWindows) {
+            let cursorScreenPoint = screen.getCursorScreenPoint();
+            let displayNearestPoint = screen.getDisplayNearestPoint(cursorScreenPoint);
+            let boards = boardWindows.boards;
+            let currentBoardWindow = boards[displayNearestPoint.id]
+            if (currentBoardWindow.isVisible()) {
+                currentBoardWindow.hide();
             } else {
-                if (currentBoard.isVisible()) {
-                    currentBoard.hide();
+                currentBoardWindow.show();
+            }
+            for (const board in boards) {
+                if (board !== displayNearestPoint.id) {
+                    boards[board].hide();
                 }
             }
         }
-    });
+    })
 }
 
 app.on('ready', () => {
@@ -104,6 +121,7 @@ app.on('ready', () => {
     startDataClearJob();
     startClipboardListener();
     registerKmListener();
+    startSettingsService();
     // if(Object.is(process.platform, "darwin")){
     //     console.log('这是mac系统');
     // }

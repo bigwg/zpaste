@@ -1,6 +1,6 @@
 const schedule = require('node-schedule');
 
-const {getBoardWindows} = require('../service/boardWindowService');
+const {getBoardWindows} = require('./windowService');
 
 let refreshBoardJob, clearDataJob;
 

@@ -27,7 +27,8 @@
     "sass-loader": "^13.2.0",
     "uiohook-napi": "^1.5.2",
     "util": "^0.12.5",
-    "web-vitals": "^2.1.4"
+    "web-vitals": "^2.1.4",
+    "zpaste": "file:"
   },
   "scripts": {
     "start": "react-app-rewired start",
