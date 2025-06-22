@@ -1,6 +1,6 @@
 const {
     app, BrowserWindow, nativeImage,
-    Tray, Menu, globalShortcut, screen
+    Tray, Menu, globalShortcut, screen, systemPreferences
 } = require('electron');
 
 const {startDataClearJob, stopDataClearJob} = require('./src/service/dataClearJob');
@@ -33,16 +33,21 @@ function createTray() {
         {
             label: "打开面板", type: "normal", click() {
                 let boardWindows = getBoardWindows();
-                if (boardWindows) {
+                if (boardWindows && boardWindows.boards) {
                     let cursorScreenPoint = screen.getCursorScreenPoint();
                     let displayNearestPoint = screen.getDisplayNearestPoint(cursorScreenPoint);
                     let boards = boardWindows.boards;
-                    let currentBoardWindow = boards[displayNearestPoint.id]
-                    currentBoardWindow.show();
-                    for (const board in boards) {
-                        if (board !== displayNearestPoint.id) {
-                            boards[board].hide();
+                    let currentBoardWindow = boards[displayNearestPoint.id];
+                    console.log("尝试显示面板，显示器ID:", displayNearestPoint.id, "窗口存在:", !!currentBoardWindow);
+                    if (currentBoardWindow) {
+                        currentBoardWindow.show();
+                        for (const board in boards) {
+                            if (board != displayNearestPoint.id && boards[board]) {
+                                boards[board].hide();
+                            }
                         }
+                    } else {
+                        console.error("找不到对应显示器的Board窗口:", displayNearestPoint.id);
                     }
                 }
             }
@@ -78,34 +83,102 @@ function createTray() {
     })
 }
 
+// 检查macOS权限
+function checkMacOSPermissions() {
+    if (process.platform === 'darwin') {
+        const trusted = systemPreferences.isTrustedAccessibilityClient(false);
+        console.log('macOS辅助功能权限状态:', trusted);
+        if (!trusted) {
+            console.log('请在系统偏好设置 > 安全性与隐私 > 隐私 > 辅助功能中添加此应用');
+            // 尝试请求权限
+            systemPreferences.isTrustedAccessibilityClient(true);
+        }
+        return trusted;
+    }
+    return true;
+}
+
 // 注册默认全局快捷键
 function registerDefaultGlobalShortcut() {
+    // 先检查权限
+    const hasPermission = checkMacOSPermissions();
+    if (!hasPermission) {
+        console.log('权限不足，快捷键可能无法正常工作');
+    }
     // 注册快捷键
-    globalShortcut.register('Alt+Space', () => {
+    const ret = globalShortcut.register('Alt+Space', () => {
         let boardWindows = getBoardWindows();
-        if (boardWindows) {
+        if (boardWindows && boardWindows.boards) {
             let cursorScreenPoint = screen.getCursorScreenPoint();
             let displayNearestPoint = screen.getDisplayNearestPoint(cursorScreenPoint);
             let boards = boardWindows.boards;
-            let currentBoardWindow = boards[displayNearestPoint.id]
-            if (currentBoardWindow.isVisible()) {
-                currentBoardWindow.hide();
-            } else {
-                currentBoardWindow.show();
-            }
-            for (const board in boards) {
-                if (board !== displayNearestPoint.id) {
-                    boards[board].hide();
+            let currentBoardWindow = boards[displayNearestPoint.id];
+            console.log("快捷键触发，显示器ID:", displayNearestPoint.id, "窗口存在:", !!currentBoardWindow);
+            if (currentBoardWindow) {
+                if (currentBoardWindow.isVisible()) {
+                    currentBoardWindow.hide();
+                } else {
+                    currentBoardWindow.show();
                 }
+                for (const board in boards) {
+                    if (board != displayNearestPoint.id && boards[board]) {
+                        boards[board].hide();
+                    }
+                }
+            } else {
+                console.error("找不到对应显示器的Board窗口:", displayNearestPoint.id);
             }
         }
-    })
+    });
+    
+    if (ret) {
+        console.log('全局快捷键 Alt+Space 注册成功');
+    } else {
+        console.error('全局快捷键 Alt+Space 注册失败');
+    }
+    
+    // 检查快捷键是否已注册
+    console.log('Alt+Space 是否已注册:', globalShortcut.isRegistered('Alt+Space'));
+    
+    // 尝试注册一个备用快捷键作为测试
+    const ret2 = globalShortcut.register('CommandOrControl+Shift+Z', () => {
+        console.log('备用快捷键 CommandOrControl+Shift+Z 被触发');
+        let boardWindows = getBoardWindows();
+        if (boardWindows && boardWindows.boards) {
+            let cursorScreenPoint = screen.getCursorScreenPoint();
+            let displayNearestPoint = screen.getDisplayNearestPoint(cursorScreenPoint);
+            let boards = boardWindows.boards;
+            let currentBoardWindow = boards[displayNearestPoint.id];
+            console.log("备用快捷键触发，显示器ID:", displayNearestPoint.id, "窗口存在:", !!currentBoardWindow);
+            if (currentBoardWindow) {
+                if (currentBoardWindow.isVisible()) {
+                    currentBoardWindow.hide();
+                } else {
+                    currentBoardWindow.show();
+                }
+                for (const board in boards) {
+                    if (board != displayNearestPoint.id && boards[board]) {
+                        boards[board].hide();
+                    }
+                }
+            } else {
+                console.error("找不到对应显示器的Board窗口:", displayNearestPoint.id);
+            }
+        }
+    });
+    
+    if (ret2) {
+        console.log('备用快捷键 CommandOrControl+Shift+Z 注册成功');
+    } else {
+        console.error('备用快捷键 CommandOrControl+Shift+Z 注册失败');
+    }
 }
 
 app.on('ready', () => {
     let primaryDisplay = screen.getPrimaryDisplay();
     let allDisplays = screen.getAllDisplays();
     console.log("屏幕信息：", JSON.stringify(allDisplays));
+    console.log("当前平台:", process.platform);
 
     createTray();
     createMainWindow();
@@ -117,7 +190,11 @@ app.on('ready', () => {
             createBoardWindow("false", display);
         }
     }
-    registerDefaultGlobalShortcut();
+    
+    // 延迟注册快捷键，确保窗口都创建完成
+    setTimeout(() => {
+        registerDefaultGlobalShortcut();
+    }, 1000);
     startDataClearJob();
     startClipboardListener();
     registerKmListener();

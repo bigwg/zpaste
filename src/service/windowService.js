@@ -20,7 +20,7 @@ function createMainWindow() {
             webviewTag: true, // 是否使用<webview>标签 在一个独立的 frame 和进程里显示外部 web 内容
             webSecurity: false, // 禁用同源策略
             nodeIntegrationInSubFrames: true, // 是否允许在子页面(iframe)或子窗口(child window)中集成Node.js
-            preload: path.join(__dirname, "./src/pages/Settings/preload.js")
+            preload: path.join(__dirname, '../pages/Settings/preload.js')
         }
     });
 
@@ -28,7 +28,7 @@ function createMainWindow() {
     if (process.env.NODE_ENV === 'dev') {
         mainWindow.loadURL('http://localhost:3000/');
     } else {
-        mainWindow.loadFile(`file://${__dirname}/index.html`);
+        mainWindow.loadFile(path.join(__dirname, '..', '..', 'build', 'index.html'));
     }
 
     // 解决应用启动白屏问题
@@ -87,11 +87,24 @@ function createBoardWindow(main, display) {
     if (process.env.NODE_ENV === 'dev') {
         boardWindow.loadURL(`http://localhost:3000/#/board?width=${width}&height=${height}&displayId=${displayId}`);
     } else {
-        boardWindow.loadFile(`file://${__dirname}/index.html`, {
+        boardWindow.loadFile(path.join(__dirname, '..', '..', 'build', 'index.html'), {
             hash: 'board',
             search: `width=${width}&height=${height}&displayId=${displayId}`
         });
     }
+
+    // 添加调试信息和错误处理
+    boardWindow.webContents.on('did-finish-load', () => {
+        console.log(`Board window ${displayId} loaded successfully`);
+    });
+
+    boardWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL) => {
+        console.error(`Board window ${displayId} failed to load:`, errorCode, errorDescription, validatedURL);
+    });
+
+    boardWindow.on('ready-to-show', () => {
+        console.log(`Board window ${displayId} ready to show`);
+    });
 
     // 解决屏幕无法铺满的问题
     boardWindow.setBounds({
@@ -106,6 +119,9 @@ function createBoardWindow(main, display) {
         boardWindows.mainBoard = boardWindow;
     }
     boardWindows.boards = {[displayId]: boardWindow, ...boardWindows.boards};
+    
+    console.log("Board窗口创建完成，displayId:", displayId, "窗口对象:", !!boardWindow);
+    console.log("当前所有Board窗口:", Object.keys(boardWindows.boards || {}));
 
 }
 

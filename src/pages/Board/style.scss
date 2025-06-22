@@ -1,89 +1,196 @@
 .board-wrapper {
-  background-color: rgba(250, 250, 250, 0.95);
-  box-sizing: border-box;
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.25) 0%, 
+    rgba(255, 255, 255, 0.15) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  border-radius: 20px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  position: relative;
+  box-sizing: border-box; // 确保边框包含在尺寸内
+  
+  // 使用伪元素模拟毛玻璃背景，避免backdrop-filter
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+      radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.3) 0%, transparent 60%),
+      radial-gradient(circle at 70% 80%, rgba(248, 249, 250, 0.2) 0%, transparent 60%),
+      linear-gradient(145deg, rgba(255, 255, 255, 0.8) 0%, rgba(250, 250, 250, 0.6) 100%);
+    pointer-events: none;
+  }
+  
+  // 添加噪点纹理增强质感
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+      radial-gradient(circle at 1px 1px, rgba(255,255,255,0.15) 1px, transparent 0);
+    background-size: 20px 20px;
+    pointer-events: none;
+    opacity: 0.5;
+  }
+  
+  // 移除复杂纹理效果
 }
 
 .board-header {
-  padding: 16px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  padding: 20px 24px 20px; // 统一padding，因为移除了统计信息行
+  background: linear-gradient(180deg, 
+    rgba(255, 255, 255, 0.2) 0%, 
+    rgba(255, 255, 255, 0.05) 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  position: relative;
+  z-index: 3;
+  flex-shrink: 0; // 防止头部被压缩
+  box-sizing: border-box;
+  
+  // 添加顶部高光
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, 
+      transparent 0%, 
+      rgba(255, 255, 255, 0.6) 50%, 
+      transparent 100%);
+  }
 }
 
-.search-container {
-  position: relative;
+.search-wrapper {
+  display: flex;
+  justify-content: center;
   width: 100%;
+}
+
+.search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 240px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 16px;
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  transition: all 0.3s ease;
+  
+  &:focus-within {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: #007AFF;
+    box-shadow: 
+      0 0 0 3px rgba(0, 122, 255, 0.1),
+      0 6px 16px rgba(0, 0, 0, 0.12),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    transform: translateY(-1px);
+  }
+}
+
+.search-icon {
+  margin-left: 12px;
+  margin-right: 8px;
+  color: #86868B;
+  font-size: 14px;
+  flex-shrink: 0;
 }
 
 .search-input {
-  width: 100%;
-  height: 36px;
-  padding: 0 36px 0 12px;
-  border-radius: 8px;
+  flex: 1;
+  height: 100%;
   border: none;
-  background-color: rgba(0, 0, 0, 0.05);
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-size: 14px;
+  background: transparent;
+  outline: none;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", Helvetica, Arial, sans-serif;
+  font-size: 13px;
+  font-weight: 400;
   color: #1D1D1F;
-  transition: all 0.2s ease;
-  
-  &:focus {
-    outline: none;
-    background-color: rgba(0, 0, 0, 0.08);
-    box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.2);
-  }
   
   &::placeholder {
-    color: #8E8E93;
+    color: #86868B;
+    font-weight: 400;
   }
 }
 
-.clear-search {
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
+.clear-btn {
+  margin-right: 8px;
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background-color: rgba(0, 0, 0, 0.2);
-  color: white;
   border: none;
+  background: rgba(0, 0, 0, 0.1);
+  color: #86868B;
+  font-size: 10px;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
   
   &:hover {
-    background-color: rgba(0, 0, 0, 0.3);
+    background: rgba(0, 0, 0, 0.2);
+    color: #FF3B30;
+    transform: scale(1.1);
+  }
+  
+  &:active {
+    transform: scale(0.95);
   }
 }
 
+// 移除了统计信息样式，改为头部按钮布局
+
 .board-list {
-  overflow-x: scroll;
+  flex: none;
+  overflow-x: auto;
   overflow-y: hidden;
   display: flex;
-  padding: 16px 12px;
-  scrollbar-width: thin;
+  padding: 12px 10px 16px;
+  gap: 10px;
+  scrollbar-width: none;
+  position: relative;
+  z-index: 1;
+  box-sizing: border-box; // 确保padding包含在高度内
   
+  // 隐藏滚动条但保持功能
   &::-webkit-scrollbar {
-    height: 6px;
+    display: none;
   }
   
-  &::-webkit-scrollbar-track {
-    background: transparent;
+  // 添加滚动指示器
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+    transition: opacity 0.3s ease;
+    opacity: 0;
   }
   
-  &::-webkit-scrollbar-thumb {
-    background-color: rgba(0, 0, 0, 0.2);
-    border-radius: 6px;
+  &:hover::after {
+    opacity: 1;
   }
 }
 
@@ -92,10 +199,24 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #8E8E93;
+  min-width: 120px;
+  height: 100%;
+  color: #86868B;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
   font-size: 14px;
   font-weight: 500;
-  padding: 0 20px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  box-shadow: 
+    0 4px 16px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.6);
+    transform: translateY(-2px);
+  }
 }
 
 .empty-state {
@@ -105,27 +226,128 @@
   justify-content: center;
   width: 100%;
   height: 100%;
-  color: #8E8E93;
+  color: #86868B;
+  position: relative;
+  z-index: 2;
   
   .empty-icon {
-    font-size: 48px;
-    margin-bottom: 16px;
-    opacity: 0.6;
+    font-size: 72px; // 从64px增加到72px，与更大的clip保持比例
+    margin-bottom: 28px; // 从24px增加到28px
+    opacity: 0.5; // 从0.6减小到0.5，更低调
+    background: linear-gradient(135deg, #86868B, #C7C7CC);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
   
-  p {
+  .empty-title {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    font-size: 20px;
+    font-weight: 600;
+    color: #1D1D1F;
+    margin-bottom: 8px;
+  }
+  
+  .empty-subtitle {
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
     font-size: 16px;
-    font-weight: 500;
+    font-weight: 400;
+    color: #86868B;
+    text-align: center;
+    line-height: 1.4;
+  }
+}
+
+// 动画效果
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
 @keyframes pulse {
-  0% { opacity: 0.6; }
-  50% { opacity: 1; }
-  100% { opacity: 0.6; }
+  0%, 100% { 
+    opacity: 0.6; 
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 1; 
+    transform: scale(1.02);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
 }
 
 .loading {
-  animation: pulse 1.5s infinite ease-in-out;
+  animation: pulse 2s infinite ease-in-out;
+}
+
+.fade-in {
+  animation: fadeInUp 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.shimmer {
+  background: linear-gradient(90deg, 
+    rgba(255, 255, 255, 0.0) 0%, 
+    rgba(255, 255, 255, 0.4) 50%, 
+    rgba(255, 255, 255, 0.0) 100%);
+  background-size: 200px 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+// 响应式设计
+@media (max-width: 768px) {
+  .board-header {
+    padding: 12px 12px 8px; // 进一步减小移动端padding
+  }
+  
+  .board-list {
+    padding: 16px 12px 20px;
+    gap: 12px;
+  }
+  
+  .search-container {
+    width: 80%; // 移动端搜索框稍微宽一些
+  }
+  
+  .search-input {
+    height: 28px; // 从40px减小到28px，移动端更加精致
+    font-size: 13px; // 从15px减小到13px
+  }
+}
+
+// 暗色模式支持（可选）
+@media (prefers-color-scheme: dark) {
+  .board-wrapper {
+    background: linear-gradient(135deg, 
+      rgba(28, 28, 30, 0.8) 0%, 
+      rgba(44, 44, 46, 0.6) 100%);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  .search-input {
+    background: rgba(44, 44, 46, 0.8);
+    color: #F2F2F7;
+    border-color: rgba(255, 255, 255, 0.1);
+    
+    &::placeholder {
+      color: #8E8E93;
+    }
+  }
+  
+  .empty-title {
+    color: #F2F2F7;
+  }
 }
