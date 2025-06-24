@@ -4,7 +4,7 @@ const {
 } = require('electron');
 
 const {startDataClearJob, stopDataClearJob} = require('./src/service/dataClearJob');
-const {startClipboardListener, stopClipboardListener} = require('./src/service/clipboardService');
+const {startClipboardListener, stopClipboardListener, recordActiveWindow, clearActiveWindow} = require('./src/service/clipboardService');
 const {registerKmListener, stopKmListener} = require('./src/service/uiohookService');
 const {createMainWindow, createBoardWindow, getMainWindow, getBoardWindows} = require('./src/service/windowService');
 const {startSettingsService} = require('./src/service/settingsService');
@@ -40,6 +40,8 @@ function createTray() {
                     let currentBoardWindow = boards[displayNearestPoint.id];
                     console.log("尝试显示面板，显示器ID:", displayNearestPoint.id, "窗口存在:", !!currentBoardWindow);
                     if (currentBoardWindow) {
+                        // 显示之前记录当前活跃窗口
+                        recordActiveWindow();
                         currentBoardWindow.show();
                         for (const board in boards) {
                             if (board != displayNearestPoint.id && boards[board]) {
@@ -90,8 +92,21 @@ function checkMacOSPermissions() {
         console.log('macOS辅助功能权限状态:', trusted);
         if (!trusted) {
             console.log('请在系统偏好设置 > 安全性与隐私 > 隐私 > 辅助功能中添加此应用');
+            console.log('没有辅助功能权限，双击粘贴功能将无法正常工作');
+            
             // 尝试请求权限
-            systemPreferences.isTrustedAccessibilityClient(true);
+            const requestResult = systemPreferences.isTrustedAccessibilityClient(true);
+            console.log('权限请求结果:', requestResult);
+            
+            // 显示用户友好的提示
+            const { dialog } = require('electron');
+            dialog.showMessageBox({
+                type: 'warning',
+                title: 'zpaste 需要辅助功能权限',
+                message: '为了正常使用双击粘贴功能，请授予 zpaste 辅助功能权限',
+                detail: '请前往：系统偏好设置 > 安全性与隐私 > 隐私 > 辅助功能，然后添加 zpaste 应用',
+                buttons: ['好的', '稍后设置']
+            });
         }
         return trusted;
     }
@@ -117,7 +132,10 @@ function registerDefaultGlobalShortcut() {
             if (currentBoardWindow) {
                 if (currentBoardWindow.isVisible()) {
                     currentBoardWindow.hide();
+                    clearActiveWindow(); // 隐藏时清除记录
                 } else {
+                    // 显示之前记录当前活跃窗口
+                    recordActiveWindow();
                     currentBoardWindow.show();
                 }
                 for (const board in boards) {
@@ -153,7 +171,10 @@ function registerDefaultGlobalShortcut() {
             if (currentBoardWindow) {
                 if (currentBoardWindow.isVisible()) {
                     currentBoardWindow.hide();
+                    clearActiveWindow(); // 隐藏时清除记录
                 } else {
+                    // 显示之前记录当前活跃窗口
+                    recordActiveWindow();
                     currentBoardWindow.show();
                 }
                 for (const board in boards) {
@@ -179,6 +200,12 @@ app.on('ready', () => {
     let allDisplays = screen.getAllDisplays();
     console.log("屏幕信息：", JSON.stringify(allDisplays));
     console.log("当前平台:", process.platform);
+
+    // 首先检查macOS权限
+    const hasPermission = checkMacOSPermissions();
+    if (process.platform === 'darwin' && !hasPermission) {
+        console.log("macOS权限检查失败，某些功能可能无法正常工作");
+    }
 
     createTray();
     createMainWindow();

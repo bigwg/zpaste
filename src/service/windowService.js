@@ -74,6 +74,13 @@ function createBoardWindow(main, display) {
         closable: false,
         fullscreenable: false,
         alwaysOnTop: true,
+        skipTaskbar: true, // 不在任务栏显示
+        ...(process.platform === 'darwin' && {
+            // macOS特殊设置
+            hasShadow: false,
+            transparent: true,
+            vibrancy: 'under-window', // 添加毛玻璃效果
+        }),
         webPreferences: { // 网页功能设置
             nodeIntegration: true, // 是否启用node集成 渲染进程的内容有访问node的能力
             webviewTag: true, // 是否使用<webview>标签 在一个独立的 frame 和进程里显示外部 web 内容
@@ -128,6 +135,7 @@ function createBoardWindow(main, display) {
 function getMainWindow() {
     return mainWindow;
 }
+
 
 function setMainWindow(window) {
     mainWindow = window;

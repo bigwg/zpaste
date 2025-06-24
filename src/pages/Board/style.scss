@@ -6,12 +6,13 @@
   box-shadow: 
     0 8px 32px rgba(0, 0, 0, 0.12),
     inset 0 1px 0 rgba(255, 255, 255, 0.3);
-  border-radius: 20px;
+  // borderRadius 由JS动态设置
   overflow: hidden;
   display: flex;
   flex-direction: column;
   position: relative;
-  box-sizing: border-box; // 确保边框包含在尺寸内
+  box-sizing: border-box;
+  // fontSize 由JS动态设置
   
   // 使用伪元素模拟毛玻璃背景，避免backdrop-filter
   &::before {
@@ -42,19 +43,17 @@
     pointer-events: none;
     opacity: 0.5;
   }
-  
-  // 移除复杂纹理效果
 }
 
 .board-header {
-  padding: 20px 24px 20px; // 统一padding，因为移除了统计信息行
+  // padding 由JS动态设置
   background: linear-gradient(180deg, 
     rgba(255, 255, 255, 0.2) 0%, 
     rgba(255, 255, 255, 0.05) 100%);
   border-bottom: 1px solid rgba(255, 255, 255, 0.15);
   position: relative;
   z-index: 3;
-  flex-shrink: 0; // 防止头部被压缩
+  flex-shrink: 0;
   box-sizing: border-box;
   
   // 添加顶部高光
@@ -82,11 +81,9 @@
   position: relative;
   display: flex;
   align-items: center;
-  width: 240px;
-  height: 32px;
+  // width, height, borderRadius, fontSize 由JS动态设置
   background: rgba(255, 255, 255, 0.9);
   border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 16px;
   box-shadow: 
     0 4px 12px rgba(0, 0, 0, 0.08),
     inset 0 1px 0 rgba(255, 255, 255, 0.8);
@@ -104,10 +101,8 @@
 }
 
 .search-icon {
-  margin-left: 12px;
-  margin-right: 8px;
+  // fontSize, marginLeft, marginRight 由JS动态设置
   color: #86868B;
-  font-size: 14px;
   flex-shrink: 0;
 }
 
@@ -118,7 +113,7 @@
   background: transparent;
   outline: none;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", Helvetica, Arial, sans-serif;
-  font-size: 13px;
+  // fontSize 由JS动态设置
   font-weight: 400;
   color: #1D1D1F;
   
@@ -129,14 +124,11 @@
 }
 
 .clear-btn {
-  margin-right: 8px;
-  width: 20px;
-  height: 20px;
+  // width, height, fontSize, marginRight 由JS动态设置
   border-radius: 50%;
   border: none;
   background: rgba(0, 0, 0, 0.1);
   color: #86868B;
-  font-size: 10px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -155,19 +147,16 @@
   }
 }
 
-// 移除了统计信息样式，改为头部按钮布局
-
 .board-list {
   flex: none;
   overflow-x: auto;
   overflow-y: hidden;
   display: flex;
-  padding: 12px 10px 16px;
-  gap: 10px;
+  // height, width, padding, gap 由JS动态设置
   scrollbar-width: none;
   position: relative;
   z-index: 1;
-  box-sizing: border-box; // 确保padding包含在高度内
+  box-sizing: border-box;
   
   // 隐藏滚动条但保持功能
   &::-webkit-scrollbar {
@@ -199,13 +188,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 120px;
-  height: 100%;
+  // width, height, fontSize, borderRadius 由JS动态设置
   color: #86868B;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  font-size: 14px;
   font-weight: 500;
-  border-radius: 16px;
   background: rgba(255, 255, 255, 0.4);
   border: 1px solid rgba(255, 255, 255, 0.2);
   transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -229,11 +215,11 @@
   color: #86868B;
   position: relative;
   z-index: 2;
+  // fontSize 由JS动态设置
   
   .empty-icon {
-    font-size: 72px; // 从64px增加到72px，与更大的clip保持比例
-    margin-bottom: 28px; // 从24px增加到28px
-    opacity: 0.5; // 从0.6减小到0.5，更低调
+    // fontSize, marginBottom 由JS动态设置
+    opacity: 0.5;
     background: linear-gradient(135deg, #86868B, #C7C7CC);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -242,19 +228,17 @@
   
   .empty-title {
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
-    font-size: 20px;
+    // fontSize, marginBottom 由JS动态设置
     font-weight: 600;
     color: #1D1D1F;
-    margin-bottom: 8px;
   }
   
   .empty-subtitle {
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-    font-size: 16px;
+    // fontSize, lineHeight 由JS动态设置
     font-weight: 400;
     color: #86868B;
     text-align: center;
-    line-height: 1.4;
   }
 }
 
@@ -307,28 +291,46 @@
   animation: shimmer 1.5s infinite;
 }
 
-// 响应式设计
+// 响应式设计 - 基于动态计算，这里只做最小值保护
 @media (max-width: 768px) {
+  .board-wrapper {
+    min-height: 200px;
+  }
+  
   .board-header {
-    padding: 12px 12px 8px; // 进一步减小移动端padding
+    min-height: 60px;
   }
   
-  .board-list {
-    padding: 16px 12px 20px;
-    gap: 12px;
-  }
-  
-  .search-container {
-    width: 80%; // 移动端搜索框稍微宽一些
+  .search-box {
+    min-width: 150px;
+    min-height: 24px;
   }
   
   .search-input {
-    height: 28px; // 从40px减小到28px，移动端更加精致
-    font-size: 13px; // 从15px减小到13px
+    min-height: 20px;
+    font-size: 12px;
+  }
+  
+  .board-list {
+    min-height: 100px;
+  }
+  
+  .empty-state {
+    .empty-icon {
+      font-size: 36px;
+    }
+    
+    .empty-title {
+      font-size: 14px;
+    }
+    
+    .empty-subtitle {
+      font-size: 12px;
+    }
   }
 }
 
-// 暗色模式支持（可选）
+// 暗色模式支持
 @media (prefers-color-scheme: dark) {
   .board-wrapper {
     background: linear-gradient(135deg, 
@@ -337,10 +339,17 @@
     border-color: rgba(255, 255, 255, 0.1);
   }
   
-  .search-input {
+  .search-box {
     background: rgba(44, 44, 46, 0.8);
-    color: #F2F2F7;
     border-color: rgba(255, 255, 255, 0.1);
+    
+    &:focus-within {
+      background: rgba(44, 44, 46, 0.9);
+    }
+  }
+  
+  .search-input {
+    color: #F2F2F7;
     
     &::placeholder {
       color: #8E8E93;

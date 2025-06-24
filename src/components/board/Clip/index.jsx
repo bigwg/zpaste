@@ -17,10 +17,17 @@ const Clip = memo(function Clip(props) {
     /**
      * 粘贴剪贴板
      */
-    const pasteClip = useCallback(() => {
+    const pasteClip = useCallback(async () => {
         setIsClicked(true);
         setTimeout(() => setIsClicked(false), 300);
-        window.electronAPI.pasteClip(props.data);
+        
+        try {
+            console.log("前端：开始粘贴操作", props.data.content.substring(0, 30) + "...");
+            await window.electronAPI.pasteClip(props.data);
+            console.log("前端：粘贴操作完成");
+        } catch (error) {
+            console.error("前端：粘贴操作失败", error);
+        }
     }, [props.data]);
 
     /**
