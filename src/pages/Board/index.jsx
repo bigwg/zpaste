@@ -77,18 +77,19 @@ function Board(props) {
         // 列表区域尺寸计算
         const boardListPadding = {
             top: Math.max(8, Math.round(12 * heightRatio)),
-            bottom: Math.max(12, Math.round(16 * heightRatio)),
+            bottom: Math.max(20, Math.round(24 * heightRatio)),
             left: Math.max(8, Math.round(10 * widthRatio)),
             right: Math.max(8, Math.round(10 * widthRatio))
         };
         
         const boardListTotalPadding = boardListPadding.top + boardListPadding.bottom;
         
-        // 可用于显示clip的高度
-        const availableHeight = height - actualUsedHeaderHeight - boardListTotalPadding;
+        // 可用于显示clip的高度 - 增加额外高度来遮挡底部横条
+        const extraHeight = 20; // 额外增加20px高度来遮挡底部横条
+        const availableHeight = height - actualUsedHeaderHeight - boardListTotalPadding + extraHeight;
         
-        // clip尺寸：使用可用高度的95%，确保不会被遮挡
-        const clipWidth = Math.floor(availableHeight * 0.95);
+        // clip尺寸：使用可用高度的88%，适当缩小并确保不会被遮挡
+        const clipWidth = Math.floor(availableHeight * 0.88);
         const clipGap = Math.max(8, Math.round(10 * widthRatio));
         
         // 加载更多元素尺寸

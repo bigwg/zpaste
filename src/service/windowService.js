@@ -74,6 +74,7 @@ function createBoardWindow(main, display) {
         closable: false,
         fullscreenable: false,
         alwaysOnTop: true,
+        resizable: false,
         skipTaskbar: true, // 不在任务栏显示
         ...(process.platform === 'darwin' && {
             // macOS特殊设置
@@ -86,6 +87,7 @@ function createBoardWindow(main, display) {
             webviewTag: true, // 是否使用<webview>标签 在一个独立的 frame 和进程里显示外部 web 内容
             webSecurity: false, // 禁用同源策略
             nodeIntegrationInSubFrames: true, // 是否允许在子页面(iframe)或子窗口(child window)中集成Node.js
+            backgroundThrottling: false, // 禁用后台节流，确保隐藏窗口也能接收消息
             preload: path.join(__dirname, '../pages/Board/preload.js')
         }
     });

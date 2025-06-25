@@ -7,7 +7,7 @@ const Clip = memo(function Clip(props) {
 
     // 简化尺寸计算
     const clipSize = props.clipWidth;
-    const margin = 8;
+    const margin = 10;
 
     const dispatch = useDispatch();
     const selectClipId = useSelector((state) => state.clipboard.selectClip);

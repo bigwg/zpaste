@@ -11,3 +11,6 @@ alwaysApply: true
 - 所有的前端组件放在 @components 目录中
 - 所有的前端页面放在 @pages 目录中
 - 后端相关代码放在 @service 目录中
+
+# 工程启动
+启动工程使用命令：npm run electron-dev

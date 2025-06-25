@@ -297,11 +297,16 @@ async function selectClip(clipId) {
  * 初始化剪贴板
  * @param boardKey
  */
-function initBoard(boardKey) {
+async function initBoard(boardKey) {
     let boardWindows = getBoardWindows();
-    console.log("boardKey:", boardKey, ", boardWindows:", boardWindows)
-    // 用最新的board数据通知前端
-    notifyBoard(boardKey);
+    console.log("初始化Board窗口 - boardKey:", boardKey, ", 所有窗口:", Object.keys(boardWindows.boards || {}))
+    
+    // 确保数据已经加载，然后通知所有Board窗口
+    const boardData = await getBoard();
+    console.log("Board数据加载完成，clipList长度:", boardData?.clipList?.length || 0);
+    
+    // 通知所有Board窗口，确保数据同步
+    await notifyAllBoards(boardData);
 }
 
 /**

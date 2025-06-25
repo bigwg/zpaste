@@ -121,7 +121,7 @@ function registerDefaultGlobalShortcut() {
         console.log('权限不足，快捷键可能无法正常工作');
     }
     // 注册快捷键
-    const ret = globalShortcut.register('Alt+Space', () => {
+    const ret = globalShortcut.register('CommandOrControl+Shift+V', () => {
         let boardWindows = getBoardWindows();
         if (boardWindows && boardWindows.boards) {
             let cursorScreenPoint = screen.getCursorScreenPoint();
@@ -150,13 +150,13 @@ function registerDefaultGlobalShortcut() {
     });
     
     if (ret) {
-        console.log('全局快捷键 Alt+Space 注册成功');
+        console.log('全局快捷键 CommandOrControl+Shift+V 注册成功');
     } else {
-        console.error('全局快捷键 Alt+Space 注册失败');
+        console.error('全局快捷键 CommandOrControl+Shift+V 注册失败');
     }
     
     // 检查快捷键是否已注册
-    console.log('Alt+Space 是否已注册:', globalShortcut.isRegistered('Alt+Space'));
+    console.log('CommandOrControl+Shift+V 是否已注册:', globalShortcut.isRegistered('CommandOrControl+Shift+V'));
     
     // 尝试注册一个备用快捷键作为测试
     const ret2 = globalShortcut.register('CommandOrControl+Shift+Z', () => {
