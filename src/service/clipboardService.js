@@ -132,11 +132,7 @@ async function addClip(text, textHtml) {
  * @param data
  */
 async function pasteClip(data) {
-    console.log("开始粘贴操作, 当前平台:", process.platform);
-    
-    // 使用之前记录的活跃窗口
-    let targetWindow = previousActiveWindow;
-    console.log("目标窗口:", targetWindow ? targetWindow.title : "无记录的活跃窗口");
+    console.log("开始粘贴操作（简化版本）, 当前平台:", process.platform);
     
     // 隐藏所有剪贴板窗口
     let boardWindows = getBoardWindows();
@@ -148,101 +144,29 @@ async function pasteClip(data) {
         }
     }
     
-    // 等待窗口完全隐藏
-    await new Promise(resolve => setTimeout(resolve, 200));
+    // 等待窗口隐藏
+    await new Promise(resolve => setTimeout(resolve, 100));
     
     // 设置剪贴板内容
     clipboard.write({text: data.content, html: data.contentHtml});
     console.log("剪贴板内容已设置:", data.content.substring(0, 50) + "...");
     
-    // 尝试激活目标窗口
-    if (targetWindow && targetWindow.window) {
-        try {
-            if (process.platform === 'darwin') {
-                // macOS特殊处理：使用多种方法激活目标窗口
-                console.log("尝试激活目标窗口:", targetWindow.title);
-                
-                // 方法1：直接激活窗口
-                targetWindow.window.bringToTop();
-                
-                // 方法2：使用AppleScript通过应用名激活
-                const { exec } = require('child_process');
-                
-                // 尝试通过窗口标题获取应用名并激活
-                const escapedTitle = targetWindow.title.replace(/'/g, "\\'");
-                const applescript = `
-                    tell application "System Events"
-                        set windowTitle to "${escapedTitle}"
-                        set appName to ""
-                        
-                        -- 尝试通过窗口标题找到应用
-                        repeat with proc in application processes
-                            try
-                                set windowList to windows of proc
-                                repeat with win in windowList
-                                    if name of win is windowTitle then
-                                        set appName to name of proc
-                                        exit repeat
-                                    end if
-                                end repeat
-                                if appName is not "" then exit repeat
-                            end try
-                        end repeat
-                        
-                        -- 如果找到应用，激活它
-                        if appName is not "" then
-                            tell application appName to activate
-                            return "success: " & appName
-                        else
-                            -- 备用方案：尝试点击窗口
-                            click (first window whose name is windowTitle)
-                            return "clicked window"
-                        end if
-                    end tell`;
-                
-                exec(`osascript -e '${applescript}'`, (error, stdout, stderr) => {
-                    if (error) {
-                        console.log("AppleScript激活失败:", error.message);
-                    } else {
-                        console.log("AppleScript激活成功:", stdout.trim());
-                    }
-                });
-                
-            } else {
-                // Windows/Linux处理
-                targetWindow.window.bringToTop();
-                console.log("已尝试激活窗口:", targetWindow.title);
-            }
-        } catch (error) {
-            console.error("激活目标窗口失败:", error);
-        }
-    } else {
-        console.log("没有记录的目标窗口，尝试获取当前活跃窗口");
-        // 备用方案：如果没有记录的窗口，尝试获取当前活跃窗口
-        try {
-            const currentActive = windowManager.getActiveWindow();
-            if (currentActive && currentActive.getTitle() !== 'zpaste' && currentActive.getTitle() !== 'Electron') {
-                currentActive.bringToTop();
-                console.log("使用当前活跃窗口:", currentActive.getTitle());
-            }
-        } catch (error) {
-            console.error("获取当前活跃窗口失败:", error);
-        }
-    }
-    
-    // 再等待一小段时间确保窗口切换完成
+    // 等待剪贴板设置完成
     await new Promise(resolve => setTimeout(resolve, 50));
     
-    // 根据平台使用不同的粘贴快捷键
+    // 由于Board窗口使用showInactive()不抢夺焦点，原窗口仍然保持激活状态
+    // 直接执行粘贴操作，无需复杂的窗口激活逻辑
+    console.log("Board窗口未抢夺焦点，直接向当前活跃窗口粘贴");
+    
     try {
         if (process.platform === 'darwin') {
             // macOS使用cmd+v
             robot.keyTap('v', 'command');
-            console.log("执行macOS粘贴操作: cmd+v");
+            console.log("执行macOS粘贴操作: cmd+v（到当前活跃窗口）");
         } else {
             // Windows/Linux使用ctrl+v
             robot.keyTap('v', 'control');
-            console.log("执行Windows/Linux粘贴操作: ctrl+v");
+            console.log("执行Windows/Linux粘贴操作: ctrl+v（到当前活跃窗口）");
         }
         
         // 验证粘贴是否成功

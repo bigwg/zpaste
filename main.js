@@ -42,7 +42,8 @@ function createTray() {
                     if (currentBoardWindow) {
                         // 显示之前记录当前活跃窗口
                         recordActiveWindow();
-                        currentBoardWindow.show();
+                        // 使用showInactive不抢夺焦点
+                        currentBoardWindow.showInactive();
                         for (const board in boards) {
                             if (board != displayNearestPoint.id && boards[board]) {
                                 boards[board].hide();
@@ -136,7 +137,8 @@ function registerDefaultGlobalShortcut() {
                 } else {
                     // 显示之前记录当前活跃窗口
                     recordActiveWindow();
-                    currentBoardWindow.show();
+                    // 使用showInactive不抢夺焦点
+                    currentBoardWindow.showInactive();
                 }
                 for (const board in boards) {
                     if (board != displayNearestPoint.id && boards[board]) {
@@ -175,7 +177,8 @@ function registerDefaultGlobalShortcut() {
                 } else {
                     // 显示之前记录当前活跃窗口
                     recordActiveWindow();
-                    currentBoardWindow.show();
+                    // 使用showInactive不抢夺焦点
+                    currentBoardWindow.showInactive();
                 }
                 for (const board in boards) {
                     if (board != displayNearestPoint.id && boards[board]) {

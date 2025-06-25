@@ -67,7 +67,7 @@ function createBoardWindow(main, display) {
         icon: nativeImage.createFromPath('src/public/favicon.ico'), // "string" || nativeImage.createFromPath('测试文本3src/image/icons/256x256.ico')从位于 path 的文件创建新的 NativeImage 实例
         show: false,
         frame: false,
-        focusable: false,
+        focusable: false,      // 不能获得焦点
         movable: false,
         minimizable: false,
         maximizable: false,
@@ -75,12 +75,20 @@ function createBoardWindow(main, display) {
         fullscreenable: false,
         alwaysOnTop: true,
         resizable: false,
-        skipTaskbar: true, // 不在任务栏显示
+        skipTaskbar: true,     // 不在任务栏显示
+        acceptFirstMouse: false, // 不接受首次鼠标点击
+        disableAutoHideCursor: false,
         ...(process.platform === 'darwin' && {
             // macOS特殊设置
             hasShadow: false,
             transparent: true,
             vibrancy: 'under-window', // 添加毛玻璃效果
+            type: 'panel',         // 设置为面板类型，不会获得焦点
+        }),
+        ...(process.platform === 'win32' && {
+            // Windows特殊设置
+            transparent: true,
+            type: 'toolbar',       // 工具栏类型，不会抢夺焦点
         }),
         webPreferences: { // 网页功能设置
             nodeIntegration: true, // 是否启用node集成 渲染进程的内容有访问node的能力
