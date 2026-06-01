@@ -1,10 +1,11 @@
-import React, {useEffect, useRef, useState, useMemo} from 'react';
+import React, {useEffect, useRef, useState, useMemo, useCallback} from 'react';
 import {useDebounceFn, useRequest} from 'ahooks';
 import './style.scss';
 import Category from "../../components/board/Category";
 import Clip from "../../components/board/Clip";
 import {useDispatch, useSelector} from "react-redux";
 import {updateBoard} from "../../store/clipboard.js";
+import {t, initLocale} from '../../i18n';
 
 function Board(props) {
 
@@ -18,6 +19,12 @@ function Board(props) {
     const hasMore = useSelector((state) => state.clipboard.page.hasMore);
 
     const [started, setStarted] = useState(false);
+    const [selectedIndex, setSelectedIndex] = useState(-1);
+
+    // 初始化语言设置
+    useEffect(() => {
+        initLocale();
+    }, []);
 
     const {run: load, loading} = useRequest(
         async () => {
@@ -37,6 +44,7 @@ function Board(props) {
 
     const containerRef = useRef(null)
     const boardListRef = useRef(null)
+    const clipRefs = useRef([])
 
     const {run: tryLoadMore} = useDebounceFn(
         () => {
@@ -82,6 +90,58 @@ function Board(props) {
         }
     }, [hasMore])
 
+    // 键盘事件处理：左右键选择clip，回车粘贴
+    const handleKeyDown = useCallback((e) => {
+        if (clipList.length === 0) return;
+
+        switch (e.key) {
+            case 'ArrowLeft':
+                e.preventDefault();
+                setSelectedIndex(prev => {
+                    const newIndex = prev <= 0 ? clipList.length - 1 : prev - 1;
+                    scrollToClip(newIndex);
+                    return newIndex;
+                });
+                break;
+            case 'ArrowRight':
+                e.preventDefault();
+                setSelectedIndex(prev => {
+                    const newIndex = prev >= clipList.length - 1 ? 0 : prev + 1;
+                    scrollToClip(newIndex);
+                    return newIndex;
+                });
+                break;
+            case 'Enter':
+                e.preventDefault();
+                if (selectedIndex >= 0 && selectedIndex < clipList.length) {
+                    const selectedClip = clipList[selectedIndex];
+                    window.electronAPI.pasteClip(selectedClip);
+                }
+                break;
+            default:
+                break;
+        }
+    }, [clipList, selectedIndex]);
+
+    // 注册键盘事件
+    useEffect(() => {
+        document.addEventListener('keydown', handleKeyDown);
+        return () => {
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [handleKeyDown]);
+
+    // 滚动到指定clip
+    const scrollToClip = (index) => {
+        if (clipRefs.current[index]) {
+            clipRefs.current[index].scrollIntoView({
+                behavior: 'smooth',
+                block: 'nearest',
+                inline: 'center'
+            });
+        }
+    };
+
     const boardWrapper = {
         height: `${height}px`,
         width: `${width}px`
@@ -98,16 +158,24 @@ function Board(props) {
     }
 
     const LoadMoreContent = useMemo(() => {
-        if (started || loading) return <span>加载中...</span>
-        if (!hasMore) return <span>没有更多了...</span>
-        return <span>开始加载下一页...</span>
+        if (started || loading) return <span>{t('clipboard.loading')}</span>
+        if (!hasMore) return <span>{t('clipboard.noMore')}</span>
+        return <span>{t('clipboard.loadMore')}</span>
     }, [started, loading, hasMore])
 
     const buildClips = () => {
-        // console.log(clipList)
         let result = [];
         for (const i in clipList) {
-            result.push(<Clip data={clipList[i]} clipWidth={clipWidth}/>)
+            const index = parseInt(i);
+            result.push(
+                <Clip
+                    key={clipList[i].clipId}
+                    ref={el => clipRefs.current[index] = el}
+                    data={clipList[i]}
+                    clipWidth={clipWidth}
+                    selected={index === selectedIndex}
+                />
+            )
         }
         return result;
     }

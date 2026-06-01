@@ -2,6 +2,16 @@
   border: #d9d5d1 solid 2px;
   border-radius: 10px 10px 10px 10px;
   flex-shrink: 0;
+  cursor: pointer;
+  
+  &:hover{
+    border-color: #a0a0a0;
+  }
+}
+
+.clip-selected{
+  border: #377af0 solid 4px !important;
+  box-shadow: 0 0 10px rgba(55, 122, 240, 0.5);
 }
 
 .clip-title{
@@ -25,7 +35,38 @@
 
 }
 
-.clip-context{
-  white-space: normal;
+.clip-content{
   background-color: #ffffff;
+  overflow: hidden;
+}
+
+.clip-context-text{
+  white-space: normal;
+  padding: 10px;
+}
+
+.clip-context-html{
+  padding: 10px;
+  overflow: hidden;
+  
+  /* HTML内容基础样式 */
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+  
+  a {
+    color: #4a8cf5;
+    text-decoration: none;
+  }
+  
+  table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+  
+  td, th {
+    border: 1px solid #ddd;
+    padding: 4px;
+  }
 }

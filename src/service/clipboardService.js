@@ -5,7 +5,6 @@ const {clipboard, NativeImage, ipcMain} = require('electron');
 const {CLIP_CATEGORY_TYPE, CLIP_MESSAGE_CHANNEL} = require('../common/backendConfigCons')
 const {getBoardWindows} = require('../service/boardWindowService');
 const {insertClip, selectClip: selectClipData, pasteClip: pasteClipData, pageQueryClips, getBoard} = require('../data/clipData');
-const {paste} = require("@testing-library/user-event/dist/paste");
 
 const duration = 500;
 
@@ -38,6 +37,24 @@ function isDiffImage(beforeImage, afterImage) {
     return beforeImage.toDataURL() !== afterImage.toDataURL();
 }
 
+/**
+ * 获取活跃窗口的图标（base64格式）
+ * @returns {string|null} base64编码的图标或null
+ */
+function getActiveWindowIcon() {
+    try {
+        const window = windowManager.getActiveWindow();
+        const icon = window.getIcon();
+        if (icon && icon.length > 0) {
+            // 将Buffer转换为base64
+            return `data:image/png;base64,${icon.toString('base64')}`;
+        }
+    } catch (error) {
+        console.log('获取窗口图标失败:', error);
+    }
+    return null;
+}
+
 function handleHtmlText(textHtml, text) {
     if (!text) {
         return;
@@ -50,11 +67,13 @@ function handleHtmlText(textHtml, text) {
             return;
         }
         const window = windowManager.getActiveWindow();
-        console.log("复制窗口title：", window.getTitle(), ", icon: ", window.getIcon())
+        const windowTitle = window.getTitle();
+        const windowIcon = getActiveWindowIcon();
+        console.log("复制窗口title：", windowTitle, ", icon: ", windowIcon ? '已获取' : '未获取');
         //  执行变动回调
         console.log(text);
         console.log(textHtml);
-        addClip(text, textHtml);
+        addClip(text, textHtml, windowTitle, windowIcon);
         //  记录此次内容
         beforeText = text;
     }
@@ -79,12 +98,15 @@ function handleImage(image) {
  * 新增剪贴板，先存入nedb，再通知redux新增
  * @param text
  * @param textHtml
+ * @param windowTitle
+ * @param windowIcon
  */
-async function addClip(text, textHtml) {
+async function addClip(text, textHtml, windowTitle, windowIcon) {
     let doc = {
         category: CLIP_CATEGORY_TYPE.TEXT.name,
         copyTime: new Date().getTime(),
-        appIcon: 1,
+        appIcon: windowIcon || 1,
+        windowTitle: windowTitle || '',
         content: text,
         contentHtml: textHtml
     };
